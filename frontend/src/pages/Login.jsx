@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { loginUser } from "../api/auth";
 import "./Login.css";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const navigate = useNavigate(); // ✅ REQUIRED
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,17 +17,19 @@ const Login = () => {
     try {
       const res = await loginUser({ username, password });
 
-      // store JWT tokens
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+      console.log("Login response:", res.data);
 
-      // redirect to Django admin if admin
+      // ✅ ADMIN → Django Admin
       if (res.data.is_admin) {
         window.location.href = "http://127.0.0.1:8000/admin/";
-      } else {
-        alert("Login successful, but not admin");
+      } 
+      // ✅ STAFF → React dashboard
+      else {
+        navigate("/staff/dashboard");
       }
+
     } catch (err) {
+      console.error(err);
       setError("Invalid username or password");
     }
   };

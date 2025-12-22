@@ -1,0 +1,130 @@
+.staff-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6f7bf7, #8e5ad7);
+  padding: 40px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.staff-container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.staff-header h2 {
+  margin: 0;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  padding: 8px 16px;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.card-title {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #333;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+}
+
+.clickable {
+  text-align: center;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.clickable:hover {
+  transform: translateY(-6px);
+}
+.primary-btn {
+  background: #6f7bf7;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.secondary-btn {
+  background: #eee;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.attendance-card {
+  max-width: 500px;
+  margin: auto;
+  text-align: center;
+}
+
+.status-box {
+  margin: 25px 0;
+}
+
+.status-badge {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.present {
+  background: #e6fffa;
+  color: #047857;
+}
+
+.absent {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.not-marked {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+.leave-card {
+  max-width: 500px;
+  margin: auto;
+}
+
+.leave-card label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+}
