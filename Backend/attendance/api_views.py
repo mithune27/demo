@@ -84,6 +84,20 @@ def api_check_out(request):
 def my_attendance(request):
     today = timezone.now().date()
 
+    # 🔒 CHECK APPROVED LEAVE
+    on_leave = LeaveRequest.objects.filter(
+        user=request.user,
+        status="APPROVED",
+        start_date__lte=today,
+        end_date__gte=today
+    ).exists()
+
+    if on_leave:
+        return Response({
+            "status": "ON_LEAVE",
+            "on_leave": True,
+        })
+
     attendance = Attendance.objects.filter(
         user=request.user,
         date=today
@@ -94,16 +108,16 @@ def my_attendance(request):
             "status": "Not Marked",
             "checked_in": False,
             "checked_out": False,
-            "check_in_time": None,
-            "check_out_time": None,
+            "on_leave": False,
         })
 
     return Response({
         "status": attendance.status,
         "checked_in": attendance.check_in_time is not None,
         "checked_out": attendance.check_out_time is not None,
-        "check_in_time": attendance.check_in_time.isoformat() if attendance.check_in_time else None,
-        "check_out_time": attendance.check_out_time.isoformat() if attendance.check_out_time else None,
+        "check_in_time": attendance.check_in_time,
+        "check_out_time": attendance.check_out_time,
+        "on_leave": False,
     })
 
 

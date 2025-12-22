@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { getMyLeaves } from "../api/leave";
 
+const badgeStyle = (status) => {
+  if (status === "APPROVED") return { color: "green" };
+  if (status === "REJECTED") return { color: "red" };
+  return { color: "orange" };
+};
+
 const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
   const [error, setError] = useState("");
@@ -22,22 +28,20 @@ const LeaveStatus = () => {
         📄 Leave Status
       </h2>
 
-      {error && (
-        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+      {leaves.length === 0 && (
+        <p style={{ textAlign: "center" }}>No leave requests</p>
       )}
 
-      {leaves.length === 0 && !error && (
-        <p style={{ textAlign: "center" }}>
-          No leave records found
-        </p>
-      )}
-
-      {leaves.map((leave) => (
-        <p key={leave.id}>
-          {leave.start_date} → {leave.end_date} :{" "}
-          <strong>{leave.status}</strong>
-        </p>
-      ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {leaves.map((leave) => (
+          <p key={leave.id}>
+            {leave.start_date} → {leave.end_date} :{" "}
+            <strong style={badgeStyle(leave.status)}>
+              {leave.status}
+            </strong>
+          </p>
+        ))}
+      </div>
     </>
   );
 };

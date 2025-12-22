@@ -7,64 +7,33 @@ const Attendance = () => {
   const [checkedOut, setCheckedOut] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
+  const [onLeave, setOnLeave] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const isNotLoggedIn = status === "Not Logged In";
 
   const loadStatus = async () => {
-    try {
-      const res = await getTodayAttendance();
+    const res = await getTodayAttendance();
 
-      setStatus(res.data.status);
-      setCheckedIn(res.data.checked_in);
-      setCheckedOut(res.data.checked_out);
-      setCheckInTime(res.data.check_in_time);
-      setCheckOutTime(res.data.check_out_time);
-      setError("");
-    } catch {
-      setStatus("Not Logged In");
-      setError("Failed to load attendance");
-    }
+    setStatus(res.data.status);
+    setCheckedIn(res.data.checked_in || false);
+    setCheckedOut(res.data.checked_out || false);
+    setCheckInTime(res.data.check_in_time);
+    setCheckOutTime(res.data.check_out_time);
+    setOnLeave(res.data.on_leave || false);
   };
 
   useEffect(() => {
     loadStatus();
   }, []);
 
-  const handleCheckIn = async () => {
-    if (checkedIn || isNotLoggedIn) return;
-
-    setLoading(true);
-    try {
-      await checkIn();
-      loadStatus();
-    } catch {
-      setError("Check-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCheckOut = async () => {
-    if (!checkedIn || checkedOut || isNotLoggedIn) return;
-
-    setLoading(true);
-    try {
-      await checkOut();
-      loadStatus();
-    } catch {
-      setError("Check-out failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
       <h2 style={{ textAlign: "center" }}>📍 Attendance</h2>
 
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+      {onLeave && (
+        <p style={{ color: "orange", textAlign: "center" }}>
+          🚫 You are on approved leave today
+        </p>
+      )}
 
       <p style={{ textAlign: "center" }}>
         <strong>Status:</strong> {status}
@@ -84,17 +53,17 @@ const Attendance = () => {
 
       <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
         <button
-          onClick={handleCheckIn}
-          disabled={loading || checkedIn || isNotLoggedIn}
+          disabled={loading || checkedIn || onLeave}
+          onClick={checkIn}
         >
-          {checkedIn ? "Checked In" : "Check In"}
+          Check In
         </button>
 
         <button
-          onClick={handleCheckOut}
-          disabled={loading || !checkedIn || checkedOut || isNotLoggedIn}
+          disabled={loading || !checkedIn || checkedOut || onLeave}
+          onClick={checkOut}
         >
-          {checkedOut ? "Checked Out" : "Check Out"}
+          Check Out
         </button>
       </div>
     </>
