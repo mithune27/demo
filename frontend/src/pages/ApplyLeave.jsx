@@ -2,8 +2,9 @@ import { useState } from "react";
 import { applyLeave } from "../api/leave";
 
 const ApplyLeave = () => {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [leaveType, setLeaveType] = useState("CASUAL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,19 +16,19 @@ const ApplyLeave = () => {
 
     try {
       await applyLeave({
-        from_date: from,
-        to_date: to,
+        leave_type: leaveType,
+        start_date: startDate,
+        end_date: endDate,
         reason,
       });
 
       alert("✅ Leave applied successfully");
-
-      setFrom("");
-      setTo("");
+      setStartDate("");
+      setEndDate("");
       setReason("");
     } catch (err) {
       console.error(err);
-      setError("❌ Failed to apply leave");
+      setError("Failed to apply leave");
     } finally {
       setLoading(false);
     }
@@ -35,31 +36,32 @@ const ApplyLeave = () => {
 
   return (
     <>
-      <h2 style={{ textAlign: "center", marginBottom: 20 }}>
-        📝 Apply Leave
-      </h2>
+      <h2 style={{ textAlign: "center" }}>📝 Apply Leave</h2>
 
-      {error && (
-        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
-      )}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
-      <form
-        onSubmit={submit}
-        style={{ display: "flex", flexDirection: "column", gap: 12 }}
-      >
-        <label>From Date</label>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        
+        <label>Leave Type</label>
+        <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)}>
+          <option value="CASUAL">Casual</option>
+          <option value="SICK">Sick</option>
+          <option value="EMERGENCY">Emergency</option>
+        </select>
+
+        <label>Start Date</label>
         <input
           type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
           required
         />
 
-        <label>To Date</label>
+        <label>End Date</label>
         <input
           type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
           required
         />
 
@@ -67,7 +69,6 @@ const ApplyLeave = () => {
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason for leave"
           required
         />
 

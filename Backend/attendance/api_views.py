@@ -69,14 +69,30 @@ def api_check_out(request):
 # API: TODAY STATUS
 # =========================
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
+@permission_classes([IsAuthenticated])
 def my_attendance(request):
+    today = timezone.now().date()
+
     attendance = Attendance.objects.filter(
-        user=request.user
-    ).order_by('-date').first()
+        user=request.user,
+        date=today
+    ).first()
+
+    if not attendance:
+        return Response({
+            "status": "Not Marked",
+            "checked_in": False,
+            "checked_out": False,
+            "check_in_time": None,
+            "check_out_time": None,
+        })
 
     return Response({
-        "status": attendance.status if attendance else "Not Marked"
+        "status": attendance.status,
+        "checked_in": attendance.check_in_time is not None,
+        "checked_out": attendance.check_out_time is not None,
+        "check_in_time": attendance.check_in_time,
+        "check_out_time": attendance.check_out_time,
     })
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

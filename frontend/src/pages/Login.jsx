@@ -7,38 +7,38 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const res = await loginUser({ username, password });
 
       console.log("Login response:", res.data);
 
-      // ✅ SAVE JWT TOKENS (THIS WAS MISSING)
-      if (res.data.access) {
-        localStorage.setItem("access", res.data.access);
-      }
-      if (res.data.refresh) {
-        localStorage.setItem("refresh", res.data.refresh);
-      }
+      // ✅ SAVE JWT TOKENS
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
 
       // ✅ ADMIN → Django Admin
       if (res.data.is_admin) {
         window.location.href = "http://127.0.0.1:8000/admin/";
+        return;
       }
-      // ✅ STAFF → React dashboard
-      else {
-        navigate("/staff/dashboard");
-      }
+
+      // ✅ STAFF → React Dashboard
+      navigate("/staff/dashboard");
 
     } catch (err) {
       console.error(err);
       setError("Invalid username or password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,7 +67,9 @@ const Login = () => {
             required
           />
 
-          <button type="submit">Login</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
       </div>
     </div>
