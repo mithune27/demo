@@ -2,6 +2,8 @@ from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 @api_view(['POST'])
 def api_login(request):
@@ -16,7 +18,10 @@ def api_login(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
+    refresh = RefreshToken.for_user(user)
+
     return Response({
-        'message': 'Login successful',
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
         'is_admin': user.is_superuser
     })
