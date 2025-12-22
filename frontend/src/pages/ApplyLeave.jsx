@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { applyLeave } from "../api/leave";
-import "./ApplyLeave.css";
 
 const ApplyLeave = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       await applyLeave({
@@ -19,27 +20,48 @@ const ApplyLeave = () => {
         reason,
       });
 
-      alert("Leave applied successfully");
+      alert("✅ Leave applied successfully");
+
       setFrom("");
       setTo("");
       setReason("");
-    } catch {
-      alert("Failed to apply leave");
+    } catch (err) {
+      console.error(err);
+      setError("❌ Failed to apply leave");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="leave-page">
-      <form className="leave-card" onSubmit={submit}>
-        <h2>📝 Apply Leave</h2>
+    <>
+      <h2 style={{ textAlign: "center", marginBottom: 20 }}>
+        📝 Apply Leave
+      </h2>
 
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+      )}
+
+      <form
+        onSubmit={submit}
+        style={{ display: "flex", flexDirection: "column", gap: 12 }}
+      >
         <label>From Date</label>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required />
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          required
+        />
 
         <label>To Date</label>
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} required />
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          required
+        />
 
         <label>Reason</label>
         <textarea
@@ -53,7 +75,7 @@ const ApplyLeave = () => {
           {loading ? "Submitting..." : "Apply Leave"}
         </button>
       </form>
-    </div>
+    </>
   );
 };
 

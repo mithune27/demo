@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .api_views import api_login
+from .api_views import api_login   
 
 urlpatterns = [
     # -------- AUTH --------
@@ -13,4 +13,3 @@ urlpatterns = [
     path("housekeeping/dashboard/", views.housekeeping_dashboard, name="housekeeping_dashboard"),
     path("canteen/dashboard/", views.canteen_dashboard, name="canteen_dashboard"),
 ]
-    

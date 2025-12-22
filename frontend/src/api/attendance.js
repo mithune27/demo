@@ -1,10 +1,17 @@
 import api from "./axios";
 
-export const getTodayAttendance = () =>
-  api.get("attendance/today/");
+// Get today's attendance
+export const getTodayAttendance = () => {
+  return api.get("/attendance/my-attendance/");
+};
 
-export const checkIn = () =>
-  api.post("attendance/checkin/");
+// Check in
+export const checkIn = () => {
+  return api.post("/attendance/api/check-in/");
+};
 
-export const checkOut = () =>
-  api.post("attendance/checkout/");
+// Check out
+export const checkOut = () => {
+  return api.post("/attendance/api/check-out/");
+};
+

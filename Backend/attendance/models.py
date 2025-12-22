@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 
+# =========================
+# ATTENDANCE MODEL (UNCHANGED)
+# =========================
 class Attendance(models.Model):
 
     STATUS_CHOICES = [
@@ -35,3 +38,34 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"
+
+
+# =========================
+# LEAVE MODEL (NEW)
+# =========================
+class Leave(models.Model):
+
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    from_date = models.DateField()
+    to_date = models.DateField()
+    reason = models.TextField()
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+
+    def __str__(self):
+        return f"{self.user.username} ({self.from_date} → {self.to_date})"

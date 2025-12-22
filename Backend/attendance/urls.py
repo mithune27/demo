@@ -4,6 +4,7 @@ from .api_views import (
     api_check_in,
     api_check_out,
     my_attendance,
+    apply_leave,
 )
 
 urlpatterns = [
@@ -31,4 +32,6 @@ urlpatterns = [
     path('api/check-in/', api_check_in, name='api_check_in'),
     path('api/check-out/', api_check_out, name='api_check_out'),
     path('my-attendance/', my_attendance, name='my_attendance'),
+    path("api/apply-leave/", apply_leave, name="apply_leave"),
+
 ]

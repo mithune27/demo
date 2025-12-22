@@ -8,7 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const navigate = useNavigate(); // ✅ REQUIRED
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,10 +19,18 @@ const Login = () => {
 
       console.log("Login response:", res.data);
 
+      // ✅ SAVE JWT TOKENS (THIS WAS MISSING)
+      if (res.data.access) {
+        localStorage.setItem("access", res.data.access);
+      }
+      if (res.data.refresh) {
+        localStorage.setItem("refresh", res.data.refresh);
+      }
+
       // ✅ ADMIN → Django Admin
       if (res.data.is_admin) {
         window.location.href = "http://127.0.0.1:8000/admin/";
-      } 
+      }
       // ✅ STAFF → React dashboard
       else {
         navigate("/staff/dashboard");

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-
+from .models import Leave
 from .models import Attendance
 
 
@@ -11,12 +11,11 @@ from .models import Attendance
 # API: CHECK-IN
 # =========================
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
 def api_check_in(request):
     user = request.user
     today = timezone.now().date()
 
-    # Prevent multiple open check-ins
     if Attendance.objects.filter(
         user=user,
         date=today,
@@ -44,7 +43,7 @@ def api_check_in(request):
 # API: CHECK-OUT
 # =========================
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
 def api_check_out(request):
     attendance = Attendance.objects.filter(
         user=request.user,
@@ -58,7 +57,6 @@ def api_check_out(request):
         )
 
     attendance.check_out_time = timezone.now()
-    attendance.status = "PRESENT"
     attendance.save()
 
     return Response(
@@ -68,29 +66,39 @@ def api_check_out(request):
 
 
 # =========================
-# API: MY ATTENDANCE LIST
+# API: TODAY STATUS
 # =========================
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
 def my_attendance(request):
-    user = request.user
-
-    attendances = Attendance.objects.filter(
-        user=user
-    ).order_by('-date')
-
-    data = [
-        {
-            "date": att.date,
-            "check_in_time": att.check_in_time,
-            "check_out_time": att.check_out_time,
-            "status": att.status,
-            "auto_checked_out": att.auto_checked_out,
-        }
-        for att in attendances
-    ]
+    attendance = Attendance.objects.filter(
+        user=request.user
+    ).order_by('-date').first()
 
     return Response({
-        "user": user.username,
-        "attendance": data
+        "status": attendance.status if attendance else "Not Marked"
     })
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def apply_leave(request):
+    from_date = request.data.get("from_date")
+    to_date = request.data.get("to_date")
+    reason = request.data.get("reason")
+
+    if not from_date or not to_date or not reason:
+        return Response(
+            {"error": "All fields are required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    Leave.objects.create(
+        user=request.user,
+        from_date=from_date,
+        to_date=to_date,
+        reason=reason,
+    )
+
+    return Response(
+        {"message": "Leave applied successfully"},
+        status=status.HTTP_201_CREATED
+    )
