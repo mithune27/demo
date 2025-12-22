@@ -7,23 +7,28 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("LOGIN BUTTON CLICKED");
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await loginUser({ username, password });
+  try {
+    const res = await loginUser({ username, password });
 
-      // assuming backend returns { access, refresh }
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+    // store JWT tokens
+    localStorage.setItem("access", res.data.access);
+    localStorage.setItem("refresh", res.data.refresh);
 
-      alert("Login successful!");
-      // later: redirect based on role
-    } catch (err) {
-      setError("Invalid username or password");
+    // ✅ redirect to Django admin
+    if (res.data.is_admin) {
+      window.location.href = "http://127.0.0.1:8000/admin/";
+    } else {
+      alert("Login successful, but not admin");
+      // later you can redirect staff elsewhere
     }
-  };
+
+  } catch (err) {
+    setError("Invalid username or password");
+  }
+};
 
   return (
     <div style={{ maxWidth: 400, margin: "100px auto" }}>
