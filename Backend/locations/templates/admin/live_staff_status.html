@@ -1,7 +1,8 @@
 {% extends "admin/base_site.html" %}
-{% block content %}
+{% load static %}
 
-<h1>📍 Live Staff Location Status</h1>
+{% block content %}
+<h1>📍 Live Staff Status</h1>
 
 <table class="admin-table" style="width:100%; border-collapse: collapse;">
   <thead>
@@ -28,9 +29,9 @@
 
       <td>
         {% if row.inside_geofence %}
-          🟢 Inside
+          ✅ Inside
         {% else %}
-          🟠 Outside
+          ❌ Outside
         {% endif %}
       </td>
 
@@ -49,5 +50,4 @@
     {% endfor %}
   </tbody>
 </table>
-
 {% endblock %}

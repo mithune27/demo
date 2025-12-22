@@ -1,0 +1,20 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div style="margin-bottom:20px;">
+  <a href="{% url 'admin:live_staff_status' %}"
+     style="
+       padding:12px 20px;
+       background:#198754;
+       color:white;
+       font-weight:600;
+       border-radius:6px;
+       text-decoration:none;
+       display:inline-block;
+     ">
+     📍 Live Staff Status
+  </a>
+</div>
+
+{{ block.super }}
+{% endblock %}
