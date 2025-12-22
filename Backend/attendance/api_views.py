@@ -151,3 +151,20 @@ def apply_leave(request):
         {"message": "Leave applied successfully"},
         status=status.HTTP_201_CREATED
     )
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def attendance_history(request):
+    records = Attendance.objects.filter(
+        user=request.user
+    ).order_by("-date")
+
+    data = []
+    for a in records:
+        data.append({
+            "date": a.date,
+            "status": a.status,
+            "check_in_time": a.check_in_time,
+            "check_out_time": a.check_out_time,
+        })
+
+    return Response(data)

@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import LiveLocationStatus from "../components/LiveLocationStatus";
+
 
 const StaffDashboard = () => {
   const navigate = useNavigate();

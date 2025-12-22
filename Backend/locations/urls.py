@@ -1,6 +1,12 @@
 from django.urls import path
-from .views import location_ping
+from .api_views import (
+    location_ping,
+    location_status,
+    admin_live_status,
+)
 
 urlpatterns = [
-    path('ping/', location_ping, name='location_ping'),
+    path("ping/", location_ping, name="location_ping"),
+    path("status/", location_status, name="location_status"),
+    path("admin/live-status/", admin_live_status),
 ]

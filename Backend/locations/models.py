@@ -14,10 +14,14 @@ class Geofence(models.Model):
 
 class LocationLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
     is_inside_geofence = models.BooleanField(default=False)
+    is_location_enabled = models.BooleanField(default=True)  # 🔥 REQUIRED
+
     timestamp = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"{self.user.username} - {self.timestamp}"

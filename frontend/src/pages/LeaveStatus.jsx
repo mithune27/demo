@@ -1,45 +1,46 @@
 import { useEffect, useState } from "react";
 import { getMyLeaves } from "../api/leave";
 
-const badgeStyle = (status) => {
-  if (status === "APPROVED") return { color: "green" };
-  if (status === "REJECTED") return { color: "red" };
-  return { color: "orange" };
-};
-
 const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getMyLeaves()
-      .then((res) => {
-        setLeaves(res.data || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Failed to load leave history");
-      });
+      .then((res) => setLeaves(res.data))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return <p style={{ textAlign: "center" }}>Loading...</p>;
+  }
+
+  if (leaves.length === 0) {
+    return <p style={{ textAlign: "center" }}>No leave requests</p>;
+  }
 
   return (
     <>
-      <h2 style={{ textAlign: "center", marginBottom: 20 }}>
+      <h2 style={{ textAlign: "center", marginBottom: 16 }}>
         📄 Leave Status
       </h2>
 
-      {leaves.length === 0 && (
-        <p style={{ textAlign: "center" }}>No leave requests</p>
-      )}
-
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {leaves.map((leave) => (
-          <p key={leave.id}>
-            {leave.start_date} → {leave.end_date} :{" "}
-            <strong style={badgeStyle(leave.status)}>
-              {leave.status}
+        {leaves.map((l, i) => (
+          <div
+            key={i}
+            style={{
+              border: "1px solid #ddd",
+              padding: "12px",
+              borderRadius: "8px",
+            }}
+          >
+            <strong>
+              {l.start_date} → {l.end_date}
             </strong>
-          </p>
+            <p>Type: {l.leave_type}</p>
+            <p>Status: <strong>{l.status}</strong></p>
+          </div>
         ))}
       </div>
     </>

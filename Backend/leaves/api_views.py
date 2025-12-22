@@ -61,3 +61,20 @@ def my_leaves(request):
         })
 
     return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_leaves(request):
+    leaves = LeaveRequest.objects.filter(user=request.user)
+
+    data = []
+    for l in leaves:
+        data.append({
+            "start_date": l.start_date,
+            "end_date": l.end_date,
+            "leave_type": l.leave_type,
+            "status": l.status,
+        })
+
+    return Response(data)

@@ -28,20 +28,23 @@ class Command(BaseCommand):
         staff_users = User.objects.filter(is_staff=True, is_active=True)
 
         for user in staff_users:
-            attendance, created = Attendance.objects.get_or_create(
+            attendance, _ = Attendance.objects.get_or_create(
                 user=user,
                 date=today,
-                defaults={"status": "ABSENT"}
+                defaults={
+                    "status": "ABSENT"
+                }
             )
 
-            # Skip admin override
+            # ✅ Skip admin override
             if attendance.admin_override:
                 continue
 
-            # Skip checked-out users
+            # ✅ Skip users already checked out
             if attendance.check_out_time:
                 continue
 
+            # ✅ Check if ANY location ping exists today
             has_ping = LocationLog.objects.filter(
                 user=user,
                 timestamp__date=today
@@ -49,9 +52,7 @@ class Command(BaseCommand):
 
             if not has_ping:
                 attendance.status = "ABSENT"
-                attendance.check_in_time = None
-                attendance.check_out_time = None
-                attendance.auto_checked_out = False
+                attendance.auto_checked_out = True
                 attendance.save()
                 absent_count += 1
 
