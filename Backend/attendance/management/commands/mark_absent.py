@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import time
 
+from django.contrib.auth.models import User
 from attendance.models import Attendance
 from locations.models import LocationLog
 
@@ -16,29 +17,33 @@ class Command(BaseCommand):
         # ⏰ Location ping cutoff time (12:00 PM)
         PING_CUTOFF_TIME = time(12, 0)
 
-        # Run only after cutoff time
         if now.time() < PING_CUTOFF_TIME:
             self.stdout.write(
                 self.style.WARNING("Absent check skipped (before cutoff time)")
             )
             return
 
-        # Get today's attendance records
-        attendances = Attendance.objects.filter(
-            date=today,
-            admin_override=False
-        )
-
         absent_count = 0
 
-        for attendance in attendances:
-            # Skip if already checked out or auto-checked out
+        staff_users = User.objects.filter(is_staff=True, is_active=True)
+
+        for user in staff_users:
+            attendance, created = Attendance.objects.get_or_create(
+                user=user,
+                date=today,
+                defaults={"status": "ABSENT"}
+            )
+
+            # Skip admin override
+            if attendance.admin_override:
+                continue
+
+            # Skip checked-out users
             if attendance.check_out_time:
                 continue
 
-            # Check if location ping exists for today
             has_ping = LocationLog.objects.filter(
-                user=attendance.user,
+                user=user,
                 timestamp__date=today
             ).exists()
 
@@ -46,6 +51,7 @@ class Command(BaseCommand):
                 attendance.status = "ABSENT"
                 attendance.check_in_time = None
                 attendance.check_out_time = None
+                attendance.auto_checked_out = False
                 attendance.save()
                 absent_count += 1
 

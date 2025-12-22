@@ -45,3 +45,19 @@ def apply_leave(request):
         {"message": "Leave applied successfully"},
         status=status.HTTP_201_CREATED
     )
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_leaves(request):
+    leaves = LeaveRequest.objects.filter(user=request.user).order_by('-applied_at')
+
+    data = []
+    for leave in leaves:
+        data.append({
+            "id": leave.id,
+            "leave_type": leave.leave_type,
+            "start_date": leave.start_date,
+            "end_date": leave.end_date,
+            "status": leave.status,
+        })
+
+    return Response(data)

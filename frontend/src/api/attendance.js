@@ -14,4 +14,7 @@ export const checkIn = () => {
 export const checkOut = () => {
   return api.post("/attendance/api/check-out/");
 };
-
+export const downloadMonthlyReport = () =>
+  api.get("attendance/export/monthly/", {
+    responseType: "blob",
+  });

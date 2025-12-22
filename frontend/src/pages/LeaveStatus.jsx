@@ -1,19 +1,43 @@
+import { useEffect, useState } from "react";
+import { getMyLeaves } from "../api/leave";
+
 const LeaveStatus = () => {
+  const [leaves, setLeaves] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getMyLeaves()
+      .then((res) => {
+        setLeaves(res.data || []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load leave history");
+      });
+  }, []);
+
   return (
     <>
       <h2 style={{ textAlign: "center", marginBottom: 20 }}>
         📄 Leave Status
       </h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <p>
-          12 Jan → 14 Jan : <strong>Pending</strong>
-        </p>
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+      )}
 
-        <p>
-          01 Jan → 02 Jan : <strong>Approved</strong>
+      {leaves.length === 0 && !error && (
+        <p style={{ textAlign: "center" }}>
+          No leave records found
         </p>
-      </div>
+      )}
+
+      {leaves.map((leave) => (
+        <p key={leave.id}>
+          {leave.start_date} → {leave.end_date} :{" "}
+          <strong>{leave.status}</strong>
+        </p>
+      ))}
     </>
   );
 };

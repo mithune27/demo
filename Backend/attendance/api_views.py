@@ -3,26 +3,39 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from .models import Leave
-from .models import Attendance
+
+from attendance.models import Attendance
+from leaves.models import LeaveRequest
 
 
 # =========================
 # API: CHECK-IN
 # =========================
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
+@permission_classes([IsAuthenticated])
 def api_check_in(request):
     user = request.user
     today = timezone.now().date()
 
+    # ❌ BLOCK if already ABSENT today
+    if Attendance.objects.filter(
+        user=user,
+        date=today,
+        status="ABSENT"
+    ).exists():
+        return Response(
+            {"error": "You are marked ABSENT for today. Contact admin."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # ❌ BLOCK multiple check-ins
     if Attendance.objects.filter(
         user=user,
         date=today,
         check_out_time__isnull=True
     ).exists():
         return Response(
-            {'error': 'Already checked in'},
+            {"error": "Already checked in"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -34,16 +47,14 @@ def api_check_in(request):
     )
 
     return Response(
-        {'message': 'Checked in successfully'},
+        {"message": "Checked in successfully"},
         status=status.HTTP_200_OK
     )
-
-
 # =========================
 # API: CHECK-OUT
 # =========================
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])   # 🔥 REQUIRED
+@permission_classes([IsAuthenticated])
 def api_check_out(request):
     attendance = Attendance.objects.filter(
         user=request.user,
@@ -66,7 +77,7 @@ def api_check_out(request):
 
 
 # =========================
-# API: TODAY STATUS
+# API: TODAY ATTENDANCE STATUS
 # =========================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -91,15 +102,21 @@ def my_attendance(request):
         "status": attendance.status,
         "checked_in": attendance.check_in_time is not None,
         "checked_out": attendance.check_out_time is not None,
-        "check_in_time": attendance.check_in_time,
-        "check_out_time": attendance.check_out_time,
+        "check_in_time": attendance.check_in_time.isoformat() if attendance.check_in_time else None,
+        "check_out_time": attendance.check_out_time.isoformat() if attendance.check_out_time else None,
     })
-@api_view(["POST"])
+
+
+# =========================
+# API: APPLY LEAVE
+# =========================
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def apply_leave(request):
     from_date = request.data.get("from_date")
     to_date = request.data.get("to_date")
     reason = request.data.get("reason")
+    leave_type = request.data.get("leave_type", "CASUAL")
 
     if not from_date or not to_date or not reason:
         return Response(
@@ -107,11 +124,13 @@ def apply_leave(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    Leave.objects.create(
+    LeaveRequest.objects.create(
         user=request.user,
-        from_date=from_date,
-        to_date=to_date,
+        start_date=from_date,
+        end_date=to_date,
         reason=reason,
+        leave_type=leave_type,
+        status="PENDING"
     )
 
     return Response(
