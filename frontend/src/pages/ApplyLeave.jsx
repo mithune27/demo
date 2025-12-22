@@ -1,83 +1,97 @@
 import { useState } from "react";
-import { applyLeave } from "../api/leave";
+import { applyLeave } from "../api/leaves";
 
 const ApplyLeave = () => {
-  const [leaveType, setLeaveType] = useState("CASUAL");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [type, setType] = useState("CASUAL");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setMsg("");
 
     try {
       await applyLeave({
-        leave_type: leaveType,
-        start_date: startDate,
-        end_date: endDate,
+        leave_type: type,
+        start_date: start,
+        end_date: end,
         reason,
       });
-
-      alert("✅ Leave applied successfully");
-      setStartDate("");
-      setEndDate("");
+      setMsg("Leave applied successfully");
+      setStart("");
+      setEnd("");
       setReason("");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to apply leave");
+    } catch {
+      setMsg("Failed to apply leave");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <h2 style={{ textAlign: "center" }}>📝 Apply Leave</h2>
+    <div className="page-scroll">
+      <div className="card">
+        <h2 className="text-center">📄 Apply Leave</h2>
 
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+        {msg && (
+          <div className="badge badge-warning text-center">{msg}</div>
+        )}
 
-      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        
-        <label>Leave Type</label>
-        <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)}>
-          <option value="CASUAL">Casual</option>
-          <option value="SICK">Sick</option>
-          <option value="EMERGENCY">Emergency</option>
-        </select>
+        <form onSubmit={handleSubmit}>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="CASUAL">Casual</option>
+            <option value="SICK">Sick</option>
+          </select>
 
-        <label>Start Date</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-        />
+          <input
+            type="date"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            required
+            style={inputStyle}
+          />
 
-        <label>End Date</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          required
-        />
+          <input
+            type="date"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            required
+            style={inputStyle}
+          />
 
-        <label>Reason</label>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          required
-        />
+          <textarea
+            placeholder="Reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            style={inputStyle}
+          />
 
-        <button disabled={loading}>
-          {loading ? "Submitting..." : "Apply Leave"}
-        </button>
-      </form>
-    </>
+          <button
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Apply Leave"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  borderRadius: "10px",
+  border: "1px solid #ddd",
+  marginBottom: "14px",
 };
 
 export default ApplyLeave;

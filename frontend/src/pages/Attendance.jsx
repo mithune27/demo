@@ -91,7 +91,6 @@ const Attendance = () => {
   // -------------------------
   const handleCheckIn = async () => {
     if (!canCheckIn) return;
-
     setLoading(true);
     try {
       await checkIn();
@@ -122,88 +121,87 @@ const Attendance = () => {
     if (!location) return null;
 
     if (!location.location_enabled) {
-      return "🔴 GPS OFF · Enable Location";
+      return <span className="badge badge-danger">🔴 GPS OFF</span>;
     }
 
-    return location.inside_geofence
-      ? "🟢 GPS ON · Inside Campus"
-      : "🟠 GPS ON · Outside Campus";
+    return location.inside_geofence ? (
+      <span className="badge badge-success">🟢 Inside Campus</span>
+    ) : (
+      <span className="badge badge-warning">🟠 Outside Campus</span>
+    );
   };
 
   return (
-    <>
-      <h2 style={{ textAlign: "center" }}>📍 Attendance</h2>
+    /* ✅ FIXED LAYOUT */
+    <div className="attendance-wrapper">
+      <div className="card attendance-card">
+        <h2 className="text-center" style={{ marginBottom: 12 }}>
+          📍 Attendance
+        </h2>
 
-      {error && (
-        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
-      )}
-
-      {/* LOCATION STATUS */}
-      {location && (
-        <p
-          style={{
-            textAlign: "center",
-            fontWeight: 600,
-            marginBottom: 12,
-          }}
-        >
-          {renderLocationBadge()}
-        </p>
-      )}
-
-      {/* WARNINGS */}
-      {location && !location.location_enabled && (
-        <p style={{ color: "red", textAlign: "center" }}>
-          🔴 Enable GPS to check in
-        </p>
-      )}
-
-      {location &&
-        location.location_enabled &&
-        !location.inside_geofence && (
-          <p style={{ color: "orange", textAlign: "center" }}>
-            🟠 Move inside campus to check in
+        {error && (
+          <p className="text-center" style={{ color: "red" }}>
+            {error}
           </p>
         )}
 
-      {onLeave && (
-        <p style={{ color: "orange", textAlign: "center" }}>
-          🚫 You are on approved leave today
+        <div className="text-center">{renderLocationBadge()}</div>
+
+        {location && !location.location_enabled && (
+          <p className="text-center status-danger">
+            🔴 Enable GPS to check in
+          </p>
+        )}
+
+        {location &&
+          location.location_enabled &&
+          !location.inside_geofence && (
+            <p className="text-center status-warning">
+              🟠 Move inside campus to check in
+            </p>
+          )}
+
+        {onLeave && (
+          <p className="text-center status-warning">
+            🚫 You are on approved leave today
+          </p>
+        )}
+
+        <p className="text-center">
+          <strong>Status:</strong> {status}
         </p>
-      )}
 
-      <p style={{ textAlign: "center" }}>
-        <strong>Status:</strong> {status}
-      </p>
+        {checkInTime && (
+          <p className="text-center">
+            ⏱ Check-in: {new Date(checkInTime).toLocaleTimeString()}
+          </p>
+        )}
 
-      {checkInTime && (
-        <p style={{ textAlign: "center" }}>
-          ⏱ Check-in: {new Date(checkInTime).toLocaleTimeString()}
-        </p>
-      )}
+        {checkOutTime && (
+          <p className="text-center">
+            ⏱ Check-out: {new Date(checkOutTime).toLocaleTimeString()}
+          </p>
+        )}
 
-      {checkOutTime && (
-        <p style={{ textAlign: "center" }}>
-          ⏱ Check-out: {new Date(checkOutTime).toLocaleTimeString()}
-        </p>
-      )}
+        <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
+          <button
+            className="btn btn-primary"
+            onClick={handleCheckIn}
+            disabled={loading || !canCheckIn}
+          >
+            {checkedIn ? "Checked In" : "Check In"}
+          </button>
 
-      <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-        <button
-          onClick={handleCheckIn}
-          disabled={loading || !canCheckIn}
-        >
-          {checkedIn ? "Checked In" : "Check In"}
-        </button>
-
-        <button
-          onClick={handleCheckOut}
-          disabled={loading || !checkedIn || checkedOut || onLeave}
-        >
-          {checkedOut ? "Checked Out" : "Check Out"}
-        </button>
+          <button
+            className="btn btn-danger"
+            onClick={handleCheckOut}
+            disabled={loading || !checkedIn || checkedOut || onLeave}
+          >
+            {checkedOut ? "Checked Out" : "Check Out"}
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

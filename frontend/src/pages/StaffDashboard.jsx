@@ -1,31 +1,53 @@
 import { useNavigate } from "react-router-dom";
-import LiveLocationStatus from "../components/LiveLocationStatus";
-
 
 const StaffDashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <>
-      <h2 style={{ textAlign: "center" }}>👋 Staff Dashboard</h2>
-      <p style={{ textAlign: "center", marginBottom: "24px" }}>
-        Choose an option
-      </p>
+    <div className="page-center">
+      <div className="card dashboard-card">
+        <h2 className="text-center dashboard-title">
+          👋 Staff Dashboard
+        </h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <button onClick={() => navigate("/staff/attendance")}>
-          📍 Attendance
-        </button>
+        <p className="text-center text-muted">
+          Choose an option
+        </p>
 
-        <button onClick={() => navigate("/staff/apply-leave")}>
-          📝 Apply Leave
-        </button>
+        <div
+          style={{
+            marginTop: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
+          {/* ATTENDANCE */}
+          <button
+            className="btn dashboard-btn"
+            onClick={() => navigate("/staff/attendance")}
+          >
+            📍 Attendance
+          </button>
 
-        <button onClick={() => navigate("/staff/leaves")}>
-          📄 My Leaves
-        </button>
+          {/* APPLY LEAVE */}
+          <button
+            className="btn dashboard-btn"
+            onClick={() => navigate("/staff/apply-leave")}
+          >
+            📝 Apply Leave
+          </button>
+
+          {/* LEAVE STATUS */}
+          <button
+            className="btn dashboard-btn"
+            onClick={() => navigate("/staff/leaves")}
+          >
+            📄 My Leaves
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

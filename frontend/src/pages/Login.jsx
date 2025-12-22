@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { loginUser } from "../api/auth";
-import "./Login.css";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -19,23 +18,16 @@ const Login = () => {
     try {
       const res = await loginUser({ username, password });
 
-      console.log("Login response:", res.data);
-
-      // ✅ SAVE JWT TOKENS
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
 
-      // ✅ ADMIN → Django Admin
       if (res.data.is_admin) {
         window.location.href = "http://127.0.0.1:8000/admin/";
         return;
       }
 
-      // ✅ STAFF → React Dashboard
       navigate("/staff/dashboard");
-
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Invalid username or password");
     } finally {
       setLoading(false);
@@ -43,12 +35,21 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h2>Welcome Back 👋</h2>
-        <p className="subtitle">Sign in to continue</p>
+    <div className="page">
+      <div className="card" style={{ maxWidth: 420, width: "100%" }}>
+        <h2 style={{ textAlign: "center" }}>Welcome Back 👋</h2>
+        <p style={{ textAlign: "center", color: "#666", marginBottom: 24 }}>
+          Sign in to continue
+        </p>
 
-        {error && <div className="error">{error}</div>}
+        {error && (
+          <div
+            className="badge badge-danger"
+            style={{ textAlign: "center", marginBottom: 16 }}
+          >
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <input
@@ -57,6 +58,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            style={inputStyle}
           />
 
           <input
@@ -65,15 +67,31 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={inputStyle}
           />
 
-          <button type="submit" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ marginTop: 12 }}
+          >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>
     </div>
   );
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "12px 14px",
+  borderRadius: "10px",
+  border: "1px solid #ddd",
+  fontSize: "14px",
+  marginBottom: "14px",
+  outline: "none",
 };
 
 export default Login;

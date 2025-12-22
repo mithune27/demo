@@ -1,50 +1,53 @@
 import { useEffect, useState } from "react";
-import { getMyLeaves } from "../api/leave";
+import { getMyLeaves } from "../api/leaves";
 
 const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMyLeaves()
-      .then((res) => setLeaves(res.data))
-      .finally(() => setLoading(false));
+    getMyLeaves().then((res) => setLeaves(res.data));
   }, []);
 
-  if (loading) {
-    return <p style={{ textAlign: "center" }}>Loading...</p>;
-  }
-
-  if (leaves.length === 0) {
-    return <p style={{ textAlign: "center" }}>No leave requests</p>;
-  }
-
   return (
-    <>
-      <h2 style={{ textAlign: "center", marginBottom: 16 }}>
-        📄 Leave Status
-      </h2>
+    <div className="page-scroll">
+      <div className="card">
+        <h2 className="text-center">📋 Leave Status</h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {leaves.map((l, i) => (
-          <div
-            key={i}
-            style={{
-              border: "1px solid #ddd",
-              padding: "12px",
-              borderRadius: "8px",
-            }}
-          >
+        {leaves.length === 0 && (
+          <p className="text-center text-muted">
+            No leave requests
+          </p>
+        )}
+
+        {leaves.map((l) => (
+          <div key={l.id} style={leaveCard}>
             <strong>
               {l.start_date} → {l.end_date}
             </strong>
             <p>Type: {l.leave_type}</p>
-            <p>Status: <strong>{l.status}</strong></p>
+            <span
+              className={`badge ${
+                l.status === "APPROVED"
+                  ? "badge-success"
+                  : l.status === "REJECTED"
+                  ? "badge-danger"
+                  : "badge-warning"
+              }`}
+            >
+              {l.status}
+            </span>
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
+};
+
+const leaveCard = {
+  padding: "14px",
+  borderRadius: "12px",
+  background: "#f9f9ff",
+  marginBottom: "12px",
 };
 
 export default LeaveStatus;

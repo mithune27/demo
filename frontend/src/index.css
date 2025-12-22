@@ -1,10 +1,275 @@
+/* ================================
+   ROOT VARIABLES
+================================ */
+:root {
+  --primary: #6c63ff;
+  --primary-dark: #554ee6;
+
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+
+  --bg-gradient: linear-gradient(135deg, #6c63ff, #8e7bff);
+  --card-bg: #ffffff;
+
+  --text-dark: #2c3e50;
+  --text-muted: #7f8c8d;
+}
+
+/* ================================
+   GLOBAL RESET
+================================ */
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  color: var(--text-dark);
+}
+
+/* ================================
+   PAGE WRAPPER (CENTER + ROUTE ANIM)
+================================ */
+.page {
+  min-height: 100vh;
   width: 100%;
-  height: 100%;
+  display: flex;
+  align-items: center;       /* vertical center */
+  justify-content: center;   /* horizontal center */
+  padding: 24px;
+  animation: pageFade 0.5s ease-out;
+}
+
+@keyframes pageFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================================
+   CARD (POP-UP EFFECT)
+================================ */
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: cardPop 0.6s ease-out;
+}
+
+@keyframes cardPop {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ================================
+   BUTTONS
+================================ */
+.btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ================================
+   BADGES
+================================ */
+.badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  animation: fadeIn 0.4s ease;
+}
+
+.badge-success {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: rgba(243, 156, 18, 0.15);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--danger);
+}
+
+/* ================================
+   STATUS TEXT
+================================ */
+.status-text {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 12px;
+  animation: fadeIn 0.4s ease;
+}
+
+.status-success {
+  color: var(--success);
+}
+
+.status-warning {
+  color: var(--warning);
+}
+
+.status-danger {
+  color: var(--danger);
+  animation: pulseDanger 1.4s infinite;
+}
+
+/* ================================
+   ANIMATIONS
+================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseDanger {
+  0% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(231, 76, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+  }
+}
+
+/* ================================
+   TEXT HELPERS
+================================ */
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+/* ================================
+   ATTENDANCE PAGE FIX
+================================ */
+.attendance-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.attendance-card {
+  max-width: 480px;
+  width: 100%;
+}
+/* ================================
+   STAFF DASHBOARD ANIMATIONS
+================================ */
+
+/* Dashboard card entry */
+.dashboard-card {
+  animation: dashboardEnter 0.6s ease-out;
+}
+
+@keyframes dashboardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dashboard buttons stagger animation */
+.dashboard-btn {
+  opacity: 0;
+  animation: buttonFadeUp 0.5s ease forwards;
+}
+
+.dashboard-btn:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.dashboard-btn:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dashboard-btn:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes buttonFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover polish */
+.dashboard-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(108, 99, 255, 0.25);
 }
