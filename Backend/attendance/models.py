@@ -69,3 +69,15 @@ class Leave(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.from_date} → {self.to_date})"
+# =========================
+# GEOFENCE MODEL (REQUIRED)
+# =========================
+class Geofence(models.Model):
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    radius_meters = models.PositiveIntegerField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Geofence ({self.latitude}, {self.longitude}, {self.radius_meters}m)"

@@ -1,11 +1,17 @@
 import api from "./axios";
 
-export const sendLocationPing = (lat, lon, isEnabled = true) =>
-  api.post("locations/ping/", {
-    latitude: lat,
-    longitude: lon,
-    is_enabled: isEnabled,
+export const sendLocationPing = async ({
+  latitude,
+  longitude,
+  is_enabled = true,
+}) => {
+  return await api.post("locations/ping/", {
+    latitude,
+    longitude,
+    is_enabled,
   });
+};
 
-export const getLocationStatus = () =>
-  api.get("locations/status/");
+export const getLocationStatus = async () => {
+  return await api.get("locations/status/");
+};

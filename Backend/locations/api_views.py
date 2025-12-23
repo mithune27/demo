@@ -23,9 +23,9 @@ def location_ping(request):
     - Saves location log
     """
 
-    lat = request.data.get('latitude')
-    lon = request.data.get('longitude')
-    is_enabled = request.data.get('is_enabled', True)
+    lat = request.data.get("latitude")
+    lon = request.data.get("longitude")
+    is_enabled = request.data.get("is_enabled", True)
 
     # -------------------------
     # GPS TURNED OFF
@@ -41,9 +41,9 @@ def location_ping(request):
 
         return Response(
             {
-                "warning": "Location is turned OFF. Please enable GPS.",
+                "location_enabled": False,
                 "inside_geofence": False,
-                "timestamp": timezone.now()
+                "timestamp": timezone.now(),
             },
             status=status.HTTP_200_OK
         )
@@ -71,15 +71,27 @@ def location_ping(request):
     # -------------------------
     geofence = Geofence.objects.first()  # single campus
     inside = False
+    distance = None
 
     if geofence:
-        inside = is_inside_geofence(
+        inside, distance = is_inside_geofence(
             lat,
             lon,
             geofence.latitude,
             geofence.longitude,
-            geofence.radius_meters
+            geofence.radius_meters,
+            return_distance=True
         )
+
+        # DEBUG (temporary)
+        print("----- LOCATION DEBUG -----")
+        print("USER LAT:", lat)
+        print("USER LON:", lon)
+        print("GEOFENCE LAT:", geofence.latitude)
+        print("GEOFENCE LON:", geofence.longitude)
+        print("RADIUS (m):", geofence.radius_meters)
+        print("DISTANCE (m):", distance)
+        print("--------------------------")
 
     # -------------------------
     # SAVE LOCATION LOG
@@ -94,9 +106,9 @@ def location_ping(request):
 
     return Response(
         {
-            "message": "Location ping recorded",
+            "location_enabled": True,
             "inside_geofence": inside,
-            "timestamp": timezone.now()
+            "timestamp": timezone.now(),
         },
         status=status.HTTP_200_OK
     )
@@ -110,19 +122,19 @@ def location_ping(request):
 def location_status(request):
     last_log = LocationLog.objects.filter(
         user=request.user
-    ).order_by('-timestamp').first()
+    ).order_by("-timestamp").first()
 
     if not last_log:
         return Response({
             "location_enabled": False,
             "inside_geofence": False,
-            "message": "No location data"
+            "message": "No location data",
         })
 
     return Response({
         "location_enabled": last_log.is_location_enabled,
         "inside_geofence": last_log.is_inside_geofence,
-        "timestamp": last_log.timestamp
+        "timestamp": last_log.timestamp,
     })
 
 
@@ -143,7 +155,7 @@ def admin_live_status(request):
     for user in staff_users:
         last_location = LocationLog.objects.filter(
             user=user
-        ).order_by('-timestamp').first()
+        ).order_by("-timestamp").first()
 
         attendance = Attendance.objects.filter(
             user=user,

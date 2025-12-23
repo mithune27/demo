@@ -1,4 +1,5 @@
-from math import radians, cos, sin, asin, sqrt
+from math import radians, cos, sin, asin, sqrt, atan2
+
 
 
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -22,22 +23,34 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return R * c
 
 
+
+
 def is_inside_geofence(
     lat,
     lon,
-    center_lat,
-    center_lon,
-    radius_meters
+    fence_lat,
+    fence_lon,
+    radius,
+    return_distance=False
 ):
-    """
-    Returns True if the point is inside the geofence radius
-    """
+    R = 6371000  # Earth radius in meters
 
-    distance = calculate_distance(
-        lat,
-        lon,
-        center_lat,
-        center_lon
+    dlat = radians(fence_lat - lat)
+    dlon = radians(fence_lon - lon)
+
+    a = (
+        sin(dlat / 2) ** 2
+        + cos(radians(lat))
+        * cos(radians(fence_lat))
+        * sin(dlon / 2) ** 2
     )
 
-    return distance <= radius_meters
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c
+
+    inside = distance <= radius
+
+    if return_distance:
+        return inside, round(distance, 2)
+
+    return inside
