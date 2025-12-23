@@ -1,6 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+from django.db import models
 
+mobile_validator = RegexValidator(
+    regex=r'^\d{10}$',
+    message='Mobile number must be exactly 10 digits.'
+)
 
 class StaffProfile(models.Model):
 
@@ -15,10 +21,10 @@ class StaffProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="staffprofile"
     )
-
     mobile_number = models.CharField(
         max_length=10,
-        help_text="Enter staff mobile number"
+        validators=[mobile_validator],
+        help_text="Enter 10-digit mobile number"
     )
 
     staff_category = models.CharField(
