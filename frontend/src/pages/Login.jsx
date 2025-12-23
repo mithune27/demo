@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { loginUser } from "../api/auth";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../api/auth";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -18,16 +18,21 @@ const Login = () => {
     try {
       const res = await loginUser({ username, password });
 
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+      // ✅ STORE AUTH STATE (single source of truth)
+      const userData = {
+        isAdmin: res.data.is_admin === true,
+        role: res.data.role || null,
+      };
 
-      if (res.data.is_admin) {
-        window.location.href = "http://127.0.0.1:8000/admin/";
-        return;
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // ✅ ROUTE BASED ON ROLE
+      if (userData.isAdmin) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/staff/dashboard", { replace: true });
       }
-
-      navigate("/staff/dashboard");
-    } catch {
+    } catch (err) {
       setError("Invalid username or password");
     } finally {
       setLoading(false);

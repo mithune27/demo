@@ -10,9 +10,9 @@ from rest_framework import status
 from .models import StaffProfile
 
 
-# =========================
-# HTML LOGIN (DJANGO TEMPLATE)
-# =========================
+# =====================================================
+# HTML LOGIN (DJANGO TEMPLATE) – KEEP AS IS
+# =====================================================
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -29,6 +29,7 @@ def login_view(request):
 
         login(request, user)
 
+        # ✅ HTML ADMIN → DJANGO ADMIN
         if user.is_superuser:
             return redirect("/admin/")
 
@@ -53,9 +54,9 @@ def login_view(request):
     return render(request, "accounts/login.html")
 
 
-# =========================
-# API LOGIN (FOR REACT)
-# =========================
+# =====================================================
+# API LOGIN (FOR REACT) – IMPORTANT CHANGES
+# =====================================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_login(request):
@@ -79,8 +80,13 @@ def api_login(request):
     # ✅ LOGIN USER (SESSION AUTH)
     login(request, user)
 
+    # 🔥 DO NOT REDIRECT FROM BACKEND
+    # 🔥 JUST RETURN ROLE INFO
+
     if user.is_superuser:
-        return Response({"is_admin": True})
+        return Response({
+            "is_admin": True
+        })
 
     try:
         staff = StaffProfile.objects.get(user=user)
@@ -102,9 +108,9 @@ def api_login(request):
     })
 
 
-# =========================
-# DASHBOARDS
-# =========================
+# =====================================================
+# TEMPLATE DASHBOARDS (OPTIONAL / LEGACY)
+# =====================================================
 @login_required
 def staff_dashboard(request):
     return render(request, "accounts/staff_dashboard.html")

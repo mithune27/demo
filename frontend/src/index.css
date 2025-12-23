@@ -273,3 +273,12 @@ body {
   transform: translateY(-3px);
   box-shadow: 0 12px 24px rgba(108, 99, 255, 0.25);
 }
+.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+}
