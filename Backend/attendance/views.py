@@ -1,26 +1,29 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from calendar import monthrange
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
-
-from .models import Attendance
+from .utils import calculate_effective_seconds
+from .models import Attendance, AttendanceSession
 from leaves.models import LeaveRequest
+from datetime import timedelta
+from django.http import JsonResponse
 
 
 # =========================
-# STAFF CHECK-IN (WEB)
+# STAFF CHECK-IN (MULTIPLE)
 # =========================
 @login_required
 @require_POST
 def check_in(request):
     user = request.user
     today = timezone.now().date()
+    now = timezone.now()
 
-    # 🚫 Block if approved leave exists
+    # 🚫 Block if approved leave exists (UNCHANGED)
     leave_exists = LeaveRequest.objects.filter(
         user=user,
         status="APPROVED",
@@ -34,42 +37,73 @@ def check_in(request):
             status=403
         )
 
-    # Prevent multiple check-ins
-    if Attendance.objects.filter(user=user, date=today).exists():
-        return HttpResponse("Already checked in for today", status=400)
-
-    Attendance.objects.create(
+    # ✅ Create or get DAILY attendance
+    attendance, _ = Attendance.objects.get_or_create(
         user=user,
         date=today,
-        check_in_time=timezone.now(),
-        status="PRESENT"
+        defaults={"status": "PRESENT"}
     )
+
+    # 🚫 Prevent double check-in without checkout
+    if attendance.sessions.filter(check_out__isnull=True).exists():
+        return HttpResponse("Already checked in", status=400)
+
+    # ✅ Create new SESSION
+    AttendanceSession.objects.create(
+        attendance=attendance,
+        check_in=now
+    )
+
+    attendance.check_in_time = now
+    attendance.status = "PRESENT"
+    attendance.save()
 
     return HttpResponse("Check-in successful")
 
 
 # =========================
-# STAFF CHECK-OUT (WEB)
+# STAFF CHECK-OUT (MULTIPLE)
 # =========================
 @login_required
 @require_POST
 def check_out(request):
     user = request.user
     today = timezone.now().date()
+    now = timezone.now()
 
     try:
         attendance = Attendance.objects.get(
             user=user,
-            date=today,
-            check_out_time__isnull=True
+            date=today
         )
     except Attendance.DoesNotExist:
-        return HttpResponse("No active check-in found for today", status=400)
+        return HttpResponse("No check-in found for today", status=400)
 
+    # 🚫 Respect admin override (UNCHANGED)
     if attendance.admin_override:
         return HttpResponse("Attendance locked by admin", status=403)
 
-    attendance.check_out_time = timezone.now()
+    # ✅ Get latest open session
+    session = attendance.sessions.filter(
+        check_out__isnull=True
+    ).last()
+
+    if not session:
+        return HttpResponse("No active check-in found", status=400)
+
+    session.check_out = now
+    session.duration_seconds = calculate_effective_seconds(
+    session.check_in,
+    session.check_out
+)
+    session.save()
+
+    # ✅ Update attendance summary
+    total_seconds = sum(
+        s.duration_seconds for s in attendance.sessions.all()
+    )
+
+    attendance.check_out_time = now
     attendance.status = "PRESENT"
     attendance.save()
 
@@ -77,7 +111,7 @@ def check_out(request):
 
 
 # =========================
-# STAFF: MONTHLY REPORT (TEXT)
+# STAFF: MONTHLY REPORT (UNCHANGED)
 # =========================
 @login_required
 def staff_monthly_report(request):
@@ -116,7 +150,7 @@ Auto Checkouts   : {records.filter(status="AUTO_CHECKOUT").count()}
 
 
 # =========================
-# ADMIN: MONTHLY REPORT (TEXT)
+# ADMIN: MONTHLY REPORT (UNCHANGED)
 # =========================
 @login_required
 @staff_member_required
@@ -156,7 +190,7 @@ Auto Checkouts   : {records.filter(status="AUTO_CHECKOUT").count()}
 
 
 # =========================
-# STAFF ATTENDANCE LIST (HTML)
+# STAFF ATTENDANCE LIST (UNCHANGED)
 # =========================
 @login_required
 def staff_attendance_view(request):
@@ -169,3 +203,40 @@ def staff_attendance_view(request):
         'attendance/staff_attendance_list.html',
         {'attendances': attendances}
     )
+@login_required
+def today_attendance_summary(request):
+    user = request.user
+    today = timezone.now().date()
+
+    try:
+        attendance = Attendance.objects.get(
+            user=user,
+            date=today
+        )
+    except Attendance.DoesNotExist:
+        return JsonResponse({
+            "status": "ABSENT",
+            "total_hours": "0h 0m",
+            "sessions": []
+        })
+
+    total_seconds = sum(
+        s.duration_seconds for s in attendance.sessions.all()
+    )
+
+    total_hours = total_seconds // 3600
+    total_minutes = (total_seconds % 3600) // 60
+
+    sessions = []
+    for s in attendance.sessions.all():
+        sessions.append({
+            "check_in": s.check_in.strftime("%H:%M"),
+            "check_out": s.check_out.strftime("%H:%M") if s.check_out else None,
+            "minutes": s.duration_seconds // 60
+        })
+
+    return JsonResponse({
+        "status": attendance.status,
+        "total_hours": f"{total_hours}h {total_minutes}m",
+        "sessions": sessions
+    })

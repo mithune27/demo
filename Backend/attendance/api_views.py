@@ -6,6 +6,11 @@ from django.utils import timezone
 
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
+from django.http import JsonResponse
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
+from .models import Attendance
 
 
 # =========================
@@ -168,3 +173,40 @@ def attendance_history(request):
         })
 
     return Response(data)
+@login_required
+def today_attendance_summary(request):
+    user = request.user
+    today = timezone.now().date()
+
+    try:
+        attendance = Attendance.objects.get(
+            user=user,
+            date=today
+        )
+    except Attendance.DoesNotExist:
+        return JsonResponse({
+            "status": "ABSENT",
+            "total_hours": "0h 0m",
+            "sessions": []
+        })
+
+    total_seconds = sum(
+        s.duration_seconds for s in attendance.sessions.all()
+    )
+
+    total_hours = total_seconds // 3600
+    total_minutes = (total_seconds % 3600) // 60
+
+    sessions = []
+    for s in attendance.sessions.all():
+        sessions.append({
+            "check_in": s.check_in.strftime("%H:%M"),
+            "check_out": s.check_out.strftime("%H:%M") if s.check_out else None,
+            "minutes": s.duration_seconds // 60
+        })
+
+    return JsonResponse({
+        "status": attendance.status,
+        "total_hours": f"{total_hours}h {total_minutes}m",
+        "sessions": sessions
+    })

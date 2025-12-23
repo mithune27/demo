@@ -81,3 +81,29 @@ class Geofence(models.Model):
 
     def __str__(self):
         return f"Geofence ({self.latitude}, {self.longitude}, {self.radius_meters}m)"
+
+
+class AttendanceDay(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+
+    total_work_seconds = models.IntegerField(default=0)
+    first_half_seconds = models.IntegerField(default=0)
+    second_half_seconds = models.IntegerField(default=0)
+
+    status = models.CharField(
+        max_length=10,
+        default="ABSENT"
+    )
+
+    class Meta:
+        unique_together = ("user", "date")
+class AttendanceSession(models.Model):
+    attendance_day = models.ForeignKey(
+        AttendanceDay,
+        on_delete=models.CASCADE,
+        related_name="sessions"
+    )
+    check_in = models.DateTimeField()
+    check_out = models.DateTimeField(null=True, blank=True)
+    duration_seconds = models.IntegerField(default=0)

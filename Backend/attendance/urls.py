@@ -1,10 +1,13 @@
 from django.urls import path
-from . import views
+from . import views 
+from .api_views import today_attendance_summary
+
 from .api_views import (
     api_check_in,
     api_check_out,
     my_attendance,
     attendance_history,
+   
 )
 
 urlpatterns = [
@@ -33,5 +36,7 @@ urlpatterns = [
     path("api/check-out/", api_check_out, name="api_check_out"),
     path("my-attendance/", my_attendance, name="my_attendance"),
     path("history/", attendance_history, name="attendance_history"),
+    path("summary/today/", today_attendance_summary),
+
 
 ]
