@@ -18,7 +18,11 @@ const Login = () => {
     try {
       const res = await loginUser({ username, password });
 
-      // ✅ STORE AUTH STATE (single source of truth)
+      // ✅ STORE JWT TOKENS (CRITICAL)
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+
+      // ✅ STORE USER INFO
       const userData = {
         isAdmin: res.data.is_admin === true,
         role: res.data.role || null,
