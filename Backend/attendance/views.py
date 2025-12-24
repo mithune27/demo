@@ -1,16 +1,16 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from calendar import monthrange
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
-from .utils import calculate_effective_seconds
-from .models import Attendance, AttendanceSession
-from leaves.models import LeaveRequest
 from datetime import timedelta
-from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .utils import calculate_effective_seconds
+from .models import Attendance, AttendanceSession, StaffProfile
+from leaves.models import LeaveRequest
 
 
 # =========================
@@ -23,7 +23,6 @@ def check_in(request):
     today = timezone.now().date()
     now = timezone.now()
 
-    # 🚫 Block if approved leave exists (UNCHANGED)
     leave_exists = LeaveRequest.objects.filter(
         user=user,
         status="APPROVED",
@@ -37,18 +36,15 @@ def check_in(request):
             status=403
         )
 
-    # ✅ Create or get DAILY attendance
     attendance, _ = Attendance.objects.get_or_create(
         user=user,
         date=today,
         defaults={"status": "PRESENT"}
     )
 
-    # 🚫 Prevent double check-in without checkout
     if attendance.sessions.filter(check_out__isnull=True).exists():
         return HttpResponse("Already checked in", status=400)
 
-    # ✅ Create new SESSION
     AttendanceSession.objects.create(
         attendance=attendance,
         check_in=now
@@ -72,36 +68,24 @@ def check_out(request):
     now = timezone.now()
 
     try:
-        attendance = Attendance.objects.get(
-            user=user,
-            date=today
-        )
+        attendance = Attendance.objects.get(user=user, date=today)
     except Attendance.DoesNotExist:
         return HttpResponse("No check-in found for today", status=400)
 
-    # 🚫 Respect admin override (UNCHANGED)
     if attendance.admin_override:
         return HttpResponse("Attendance locked by admin", status=403)
 
-    # ✅ Get latest open session
-    session = attendance.sessions.filter(
-        check_out__isnull=True
-    ).last()
+    session = attendance.sessions.filter(check_out__isnull=True).last()
 
     if not session:
         return HttpResponse("No active check-in found", status=400)
 
     session.check_out = now
     session.duration_seconds = calculate_effective_seconds(
-    session.check_in,
-    session.check_out
-)
-    session.save()
-
-    # ✅ Update attendance summary
-    total_seconds = sum(
-        s.duration_seconds for s in attendance.sessions.all()
+        session.check_in,
+        session.check_out
     )
+    session.save()
 
     attendance.check_out_time = now
     attendance.status = "PRESENT"
@@ -111,7 +95,7 @@ def check_out(request):
 
 
 # =========================
-# STAFF: MONTHLY REPORT (UNCHANGED)
+# STAFF: MONTHLY REPORT
 # =========================
 @login_required
 def staff_monthly_report(request):
@@ -150,7 +134,7 @@ Auto Checkouts   : {records.filter(status="AUTO_CHECKOUT").count()}
 
 
 # =========================
-# ADMIN: MONTHLY REPORT (UNCHANGED)
+# ADMIN: MONTHLY REPORT
 # =========================
 @login_required
 @staff_member_required
@@ -190,7 +174,7 @@ Auto Checkouts   : {records.filter(status="AUTO_CHECKOUT").count()}
 
 
 # =========================
-# STAFF ATTENDANCE LIST (UNCHANGED)
+# STAFF ATTENDANCE LIST
 # =========================
 @login_required
 def staff_attendance_view(request):
@@ -203,16 +187,18 @@ def staff_attendance_view(request):
         'attendance/staff_attendance_list.html',
         {'attendances': attendances}
     )
+
+
+# =========================
+# TODAY ATTENDANCE SUMMARY
+# =========================
 @login_required
 def today_attendance_summary(request):
     user = request.user
     today = timezone.now().date()
 
     try:
-        attendance = Attendance.objects.get(
-            user=user,
-            date=today
-        )
+        attendance = Attendance.objects.get(user=user, date=today)
     except Attendance.DoesNotExist:
         return JsonResponse({
             "status": "ABSENT",
@@ -240,3 +226,68 @@ def today_attendance_summary(request):
         "total_hours": f"{total_hours}h {total_minutes}m",
         "sessions": sessions
     })
+
+
+# =========================
+# ADMIN: CREATE USER API
+# =========================
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework import status
+
+
+@csrf_exempt
+@api_view(["POST"])
+@staff_member_required
+def admin_create_user(request):
+    data = request.data
+
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+    role = data.get("role")
+    mobile = data.get("mobile")
+
+    if not username or not password or not role:
+        return Response(
+            {"error": "Missing required fields"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not email or not email.endswith("@gmail.com"):
+        return Response(
+            {"error": "Email must end with @gmail.com"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not mobile or not mobile.isdigit() or len(mobile) != 10:
+        return Response(
+            {"error": "Mobile number must be exactly 10 digits"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if User.objects.filter(username=username).exists():
+        return Response(
+            {"error": "Username already exists"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+        is_staff=True,
+        is_active=True,
+    )
+
+    StaffProfile.objects.create(
+        user=user,
+        role=role,
+        mobile=mobile,
+    )
+
+    return Response(
+        {"message": "User created successfully"},
+        status=status.HTTP_201_CREATED
+    )

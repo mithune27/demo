@@ -1,11 +1,52 @@
 from django.contrib import admin
-from .models import Attendance
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+from .models import (
+    Attendance,
+    Leave,
+    Geofence,
+    StaffProfile,
+)
+
+# =====================================================
+# STAFF PROFILE INLINE (inside Django User)
+# =====================================================
+class StaffProfileInline(admin.StackedInline):
+    model = StaffProfile
+    can_delete = False
+    extra = 0
 
 
+# =====================================================
+# EXTEND DJANGO USER ADMIN
+# =====================================================
+class UserAdmin(BaseUserAdmin):
+    inlines = [StaffProfileInline]
+
+    list_display = (
+        "username",
+        "email",
+        "is_staff",
+        "is_active",
+        "is_superuser",
+    )
+    list_filter = ("is_staff", "is_active", "is_superuser")
+    search_fields = ("username", "email")
+    ordering = ("username",)
+
+
+# Unregister default User admin and register custom one
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+
+# =====================================================
+# ATTENDANCE ADMIN (UNCHANGED – YOUR CODE)
+# =====================================================
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
 
-    # What admin sees in list view
     list_display = (
         'user',
         'date',
@@ -15,26 +56,21 @@ class AttendanceAdmin(admin.ModelAdmin):
         'admin_override',
     )
 
-    # Filters on right side
     list_filter = (
         'status',
         'admin_override',
         'date',
     )
 
-    # Search by username
     search_fields = ('user__username',)
 
-    # Default ordering
     ordering = ('-date',)
 
-    # Protect identity fields
     readonly_fields = (
         'user',
         'date',
     )
 
-    # Clean layout inside edit page
     fieldsets = (
         ('User & Date (Locked)', {
             'fields': (
@@ -56,3 +92,19 @@ class AttendanceAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+# =====================================================
+# OTHER MODELS
+# =====================================================
+@admin.register(Leave)
+class LeaveAdmin(admin.ModelAdmin):
+    list_display = ("user", "from_date", "to_date", "status")
+    list_filter = ("status",)
+    search_fields = ("user__username",)
+
+
+@admin.register(Geofence)
+class GeofenceAdmin(admin.ModelAdmin):
+    list_display = ("latitude", "longitude", "radius_meters", "created_at")
+    

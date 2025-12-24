@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views 
 from .api_views import today_attendance_summary
+from .views import admin_create_user
 
 from .api_views import (
     api_check_in,
@@ -37,6 +38,7 @@ urlpatterns = [
     path("my-attendance/", my_attendance, name="my_attendance"),
     path("history/", attendance_history, name="attendance_history"),
     path("summary/today/", today_attendance_summary),
+    path("admin/users/create/", admin_create_user, name="admin-create-user"),
 
 
 ]
