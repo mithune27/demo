@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-from locations.views import live_staff_status
+from locations.admin_views import live_staff_status
+
 
 
 def home_redirect(request):

@@ -14,11 +14,11 @@ const LiveLocationStatus = () => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
-          const res = await sendLocationPing(
-            pos.coords.latitude,
-            pos.coords.longitude
-          );
-
+          const res = await sendLocationPing({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            is_enabled: true,
+          });
           setStatus(
             res.data.inside_geofence ? "🟢 Inside Campus" : "🔴 Outside Campus"
           );

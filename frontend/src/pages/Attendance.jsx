@@ -3,6 +3,8 @@ import { getTodayAttendance, checkIn, checkOut } from "../api/attendance";
 import { sendLocationPing } from "../api/location";
 
 const Attendance = () => {
+  console.log("Attendance component rendered");
+
   const [status, setStatus] = useState("loading");
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
@@ -52,12 +54,13 @@ const Attendance = () => {
             longitude: pos.coords.longitude,
             is_enabled: true,
           });
-
+            console.log("GPS RESPONSE:", res.data);
           // 🔥 NORMALIZE RESPONSE
           setLocation({
-            location_enabled: true,
-            inside_geofence: res.data.inside_geofence,
-          });
+            location_enabled: res.data.location_enabled ?? true,
+           inside_geofence: !!res.data.inside_geofence,
+        });
+
         } catch (err) {
           console.error(err);
         }
