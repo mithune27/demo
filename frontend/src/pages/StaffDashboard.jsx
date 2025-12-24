@@ -45,6 +45,14 @@ const StaffDashboard = () => {
           >
             📄 My Leaves
           </button>
+
+          {/* ✅ REPORTS (NEW) */}
+          <button
+            className="btn dashboard-btn"
+            onClick={() => navigate("/staff/reports")}
+          >
+            📊 Reports
+          </button>
         </div>
       </div>
     </div>
@@ -52,3 +60,4 @@ const StaffDashboard = () => {
 };
 
 export default StaffDashboard;
+
