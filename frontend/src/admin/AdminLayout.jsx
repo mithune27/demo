@@ -13,21 +13,22 @@ const AdminLayout = () => {
         height: "100vh",
         width: "100%",
         overflow: "hidden",
+        background: "#f1f5f9",
       }}
     >
-      {/* Sidebar */}
+      {/* ================= Sidebar ================= */}
       <AdminSidebar
         collapsed={collapsed}
-        onToggle={() => setCollapsed(!collapsed)}
+        onToggle={() => setCollapsed((prev) => !prev)}
       />
 
-      {/* Main Content */}
+      {/* ================= Main Content ================= */}
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          background: "#f8fafc",
+          minWidth: 0, // ✅ prevents layout overflow bugs
         }}
       >
         {/* Topbar */}
@@ -39,6 +40,7 @@ const AdminLayout = () => {
             flex: 1,
             padding: 24,
             overflowY: "auto",
+            background: "#f8fafc",
           }}
         >
           <Outlet />
@@ -49,3 +51,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
