@@ -24,8 +24,8 @@ from .report_views import (
 
 urlpatterns = [
     # -------- Attendance --------
-    path("check-in/", api_check_in),
-    path("check-out/", api_check_out),
+    path("api/check-in/", api_check_in),
+    path("api/check-out/", api_check_out),
     path("today/", my_attendance),
     path("history/", attendance_history),
     path("my-attendance/", my_attendance),
