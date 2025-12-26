@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import "./adminUsers.css";
+import { toast } from "react-toastify";
 
 const AdminUsers = () => {
   const navigate = useNavigate();
@@ -12,15 +13,22 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
 
+  // TOGGLE
   const [confirmToggle, setConfirmToggle] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
 
+  // DELETE
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+  const [deleteUsername, setDeleteUsername] = useState("");
+
+  // ================= LOAD USERS =================
   const loadUsers = async () => {
     try {
       const res = await api.get("/accounts/admin/users/");
       setUsers(res.data);
-    } catch {
-      console.error("Failed to load users");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -34,25 +42,68 @@ const AdminUsers = () => {
   const toggleStatus = async () => {
     if (!confirmToggle) return;
 
-    await api.post(
-      `/accounts/admin/users/${confirmToggle.id}/toggle/`
-    );
-    setConfirmToggle(null);
-    loadUsers();
+    const toastId = toast.loading("Updating user status...");
+
+    try {
+      await api.post(
+        `/accounts/admin/users/${confirmToggle.id}/toggle/`
+      );
+
+      toast.update(toastId, {
+        render: "User status updated",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
+
+      setConfirmToggle(null);
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      toast.update(toastId, {
+        render: "Failed to update user status",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    }
   };
 
   // ================= DELETE =================
   const deleteUser = async () => {
-    if (!confirmDelete) return;
+    if (!deleteUserId) {
+      toast.error("User ID missing");
+      return;
+    }
+
+    const toastId = toast.loading("Deleting user...");
 
     try {
       await api.delete(
-        `/accounts/admin/users/${confirmDelete.id}/delete/`
+        `/accounts/admin/users/${deleteUserId}/delete/`
       );
-      setConfirmDelete(null);
+
+      toast.update(toastId, {
+        render: "User deleted successfully",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
+
+      setShowDeleteModal(false);
+      setDeleteUserId(null);
+      setDeleteUsername("");
+
       loadUsers();
-    } catch {
-      alert("Delete failed");
+    } catch (err) {
+      console.error(err);
+      toast.update(toastId, {
+        render:
+          err.response?.data?.error || "Delete failed",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
@@ -154,7 +205,11 @@ const AdminUsers = () => {
                     {/* DELETE */}
                     <button
                       className="icon-btn danger"
-                      onClick={() => setConfirmDelete(u)}
+                      onClick={() => {
+                        setDeleteUserId(u.id);
+                        setDeleteUsername(u.username);
+                        setShowDeleteModal(true);
+                      }}
                     >
                       🗑️
                     </button>
@@ -191,12 +246,12 @@ const AdminUsers = () => {
       )}
 
       {/* ================= DELETE MODAL ================= */}
-      {confirmDelete && (
+      {showDeleteModal && (
         <ConfirmModal
           danger
           title="Delete User"
-          message={`This will permanently delete ${confirmDelete.username}.`}
-          onCancel={() => setConfirmDelete(null)}
+          message={`This will permanently delete ${deleteUsername}.`}
+          onCancel={() => setShowDeleteModal(false)}
           onConfirm={deleteUser}
         />
       )}

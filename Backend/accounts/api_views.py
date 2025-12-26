@@ -1,14 +1,15 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import StaffProfile
+from .models import StaffProfile    
 
 
 # =====================================================
@@ -36,7 +37,6 @@ def api_login(request):
 
     refresh = RefreshToken.for_user(user)
 
-    # ADMIN
     if user.is_superuser:
         return Response({
             "access": str(refresh.access_token),
@@ -45,7 +45,6 @@ def api_login(request):
             "role": "ADMIN"
         })
 
-    # STAFF
     try:
         staff = StaffProfile.objects.get(user=user)
     except StaffProfile.DoesNotExist:
@@ -76,17 +75,21 @@ def api_login(request):
 def api_me(request):
     user = request.user
 
-    # =========================
-    # UPDATE PROFILE (PUT)
-    # =========================
+    # ================= UPDATE PROFILE =================
     if request.method == "PUT":
-        # Admin: read-only for now
-        if user.is_superuser:
-            return Response(
-                {"detail": "Admin profile editing not enabled"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        data = request.data
 
+        # Update common fields (Admin + Staff)
+        user.first_name = data.get("first_name", user.first_name)
+        user.last_name = data.get("last_name", user.last_name)
+        user.email = data.get("email", user.email)
+        user.save()
+
+        # Admin does NOT have StaffProfile
+        if user.is_superuser:
+            return Response({"success": True})
+
+        # Staff profile update
         try:
             staff = StaffProfile.objects.get(user=user)
         except StaffProfile.DoesNotExist:
@@ -95,58 +98,98 @@ def api_me(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        data = request.data
-
-        # Update fields safely
-        staff.mobile_number = data.get("mobile_number", staff.mobile_number)
-        staff.date_of_birth = data.get("date_of_birth", staff.date_of_birth)
+        staff.mobile_number = data.get("mobile", staff.mobile_number)
         staff.gender = data.get("gender", staff.gender)
-        staff.address = data.get("address", staff.address)
-
-        # Profile picture
-        if "profile_pic" in request.FILES:
-            staff.profile_pic = request.FILES["profile_pic"]
-
+        staff.date_of_birth = data.get("dob", staff.date_of_birth)
         staff.save()
 
-    # =========================
-    # RETURN PROFILE (GET)
-    # =========================
+        return Response({"success": True})
+
+    # ================= RETURN PROFILE =================
     if user.is_superuser:
         return Response({
-            "full_name": f"{user.first_name} {user.last_name}".strip(),
             "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "email": user.email,
-
-            "mobile_number": None,
-            "date_of_birth": None,
-            "gender": None,
-            "address": None,
-
             "role": "ADMIN",
             "status": "Active",
-            "profile_pic": None
+            "mobile": "",
+            "gender": "",
+            "dob": ""
         })
 
-    try:
-        staff = StaffProfile.objects.get(user=user)
-    except StaffProfile.DoesNotExist:
-        return Response(
-            {"error": "Staff profile not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
+    # Staff profile
+    staff = StaffProfile.objects.get(user=user)
     return Response({
-        "full_name": f"{user.first_name} {user.last_name}".strip(),
         "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "email": user.email,
-
-        "mobile_number": staff.mobile_number,
-        "date_of_birth": staff.date_of_birth,
-        "gender": staff.gender,
-        "address": staff.address,
-
         "role": staff.staff_category,
         "status": "Active" if staff.is_active_staff else "Inactive",
-        "profile_pic": staff.profile_pic.url if staff.profile_pic else None
+        "mobile": staff.mobile_number,
+        "gender": staff.gender,
+        "dob": staff.date_of_birth,
     })
+
+# =====================================================
+# ADMIN: LIST ALL USERS
+# =====================================================
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def list_users(request):
+    users = User.objects.all().order_by("id")
+
+    data = []
+    for u in users:
+        try:
+            staff = StaffProfile.objects.get(user=u)
+            role = staff.staff_category
+            is_active = staff.is_active_staff
+        except StaffProfile.DoesNotExist:
+            role = "ADMIN" if u.is_superuser else ""
+            is_active = u.is_active
+
+        data.append({
+            "id": u.id,
+            "username": u.username,
+            "role": role,
+            "is_active": is_active,
+            "is_superuser": u.is_superuser,
+        })
+
+    return Response(data)
+
+
+# =====================================================
+# ADMIN: DELETE USER (FINAL & SAFE)
+# =====================================================
+@api_view(["DELETE"])
+@permission_classes([IsAdminUser])
+def delete_staff_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    if user.id == request.user.id:
+        return Response(
+            {"error": "You cannot delete your own account"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if user.is_superuser:
+        return Response(
+            {"error": "Cannot delete a superuser"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Delete dependent records first
+    StaffProfile.objects.filter(user=user).delete()
+
+    # Delete user
+    user.delete()
+
+    return Response(
+        {"message": "User deleted successfully"},
+        status=status.HTTP_200_OK
+    )
+    

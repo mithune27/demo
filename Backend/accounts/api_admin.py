@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+from django.shortcuts import get_object_or_404   # ✅ FIX
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -13,12 +14,17 @@ from .models import StaffProfile
 # ADMIN: LIST USERS
 # =====================================================
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def admin_users_list(request):
+    if not request.user.is_superuser:
+        return Response(
+            {"error": "Admin access required"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
     users = User.objects.all()
 
     data = []
-
     for user in users:
         if user.is_superuser:
             data.append({
@@ -26,7 +32,7 @@ def admin_users_list(request):
                 "username": user.username,
                 "role": "ADMIN",
                 "is_active": user.is_active,
-                "is_superuser": True
+                "is_superuser": True,
             })
             continue
 
@@ -43,17 +49,16 @@ def admin_users_list(request):
             "username": user.username,
             "role": role,
             "is_active": is_active,
-            "is_superuser": False
+            "is_superuser": False,
         })
 
     return Response(data)
-
 
 # =====================================================
 # ADMIN: TOGGLE STAFF STATUS
 # =====================================================
 @api_view(["POST"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def toggle_staff_status(request, user_id):
     try:
         staff = StaffProfile.objects.get(user_id=user_id)
@@ -71,7 +76,7 @@ def toggle_staff_status(request, user_id):
 # ADMIN: CREATE STAFF USER
 # =====================================================
 @api_view(["POST"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def create_staff_user(request):
     data = request.data
 
@@ -96,7 +101,7 @@ def create_staff_user(request):
 # ADMIN: GET SINGLE STAFF USER
 # =====================================================
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def get_staff_user(request, user_id):
     try:
         user = User.objects.get(id=user_id)
@@ -122,7 +127,7 @@ def get_staff_user(request, user_id):
 # ADMIN: UPDATE STAFF USER
 # =====================================================
 @api_view(["PUT"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def update_staff_user(request, user_id):
     try:
         user = User.objects.get(id=user_id)
@@ -147,8 +152,12 @@ def update_staff_user(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+
+# =====================================================
+# ADMIN: DELETE STAFF USER (FINAL FIX)
+# =====================================================
 @api_view(["DELETE"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def delete_staff_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
@@ -159,7 +168,12 @@ def delete_staff_user(request, user_id):
             status=status.HTTP_403_FORBIDDEN
         )
 
+    # 🔥 Delete staff profile first
+    StaffProfile.objects.filter(user=user).delete()
+
+    # 🔥 Then delete user
     user.delete()
+
     return Response(
         {"success": "User deleted successfully"},
         status=status.HTTP_200_OK
