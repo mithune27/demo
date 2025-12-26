@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
 import ReportTabs from "../components/ReportTabs";
-import {
-  getDailyReport,
-  getMonthlyReport,
-  getLeaveReport,
-  getGeofenceReport,
-  getGpsOffReport,
-} from "../api/reports";
+import { getDailyReport, getMonthlyReport, getLeaveReport } from "../api/reports";
+
 
 const Reports = () => {
-  const [active, setActive] = useState("Daily");
+  const [active, setActive] = useState("Daily Attendance");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -24,21 +19,24 @@ const Reports = () => {
     try {
       let res;
 
-      if (active === "Daily") {
+      if (active === "Daily Attendance") {
         res = await getDailyReport(today);
-      } else if (active === "Monthly") {
-        const d = new Date();
-        res = await getMonthlyReport(d.getFullYear(), d.getMonth() + 1);
-      } else if (active === "Leaves") {
-        res = await getLeaveReport();
-      } else if (active === "Geofence") {
-        res = await getGeofenceReport();
-      } else if (active === "GPS OFF") {
-        res = await getGpsOffReport();
       }
 
-      setData(res.data);
-    } catch {
+      else if (active === "Monthly Summary") {
+        const d = new Date();
+        res = await getMonthlyReport(d.getFullYear(), d.getMonth() + 1);
+      }
+
+     
+
+      else if (active === "Leave Details") {
+        res = await getLeaveReport();
+      }
+
+      setData(res?.data || []);
+    } catch (error) {
+      console.log(error);
       setData([]);
     } finally {
       setLoading(false);
@@ -54,22 +52,29 @@ const Reports = () => {
 
         {loading && <p>Loading...</p>}
 
-        {!loading && data.length === 0 && <p>No data available</p>}
+        {!loading && data.length === 0 && (
+          <p>No data available</p>
+        )}
 
         {!loading && data.length > 0 && (
           <table className="table">
             <thead>
               <tr>
                 {Object.keys(data[0]).map((key) => (
-                  <th key={key}>{key.replace("_", " ")}</th>
+                  <th key={key}>
+                    {key.replace(/_/g, " ")}
+                  </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
               {data.map((row, idx) => (
                 <tr key={idx}>
                   {Object.values(row).map((val, i) => (
-                    <td key={i}>{val === null ? "-" : String(val)}</td>
+                    <td key={i}>
+                      {val === null ? "-" : String(val)}
+                    </td>
                   ))}
                 </tr>
               ))}
