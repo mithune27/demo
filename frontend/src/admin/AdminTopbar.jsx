@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
 
-
 const AdminTopbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -19,13 +18,27 @@ const AdminTopbar = () => {
         <strong>Staff Management</strong>
 
         <div style={{ position: "relative" }}>
-          <button style={profileBtn} onClick={() => setMenuOpen(!menuOpen)}>
+          <button
+            style={profileBtn}
+            onClick={() => setMenuOpen((prev) => !prev)}
+          >
             Admin ▾
           </button>
 
           {menuOpen && (
             <div style={dropdown}>
-              <div style={item}>Profile</div>
+              {/* ✅ PROFILE FIX */}
+              <div
+                style={item}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/admin/profile");
+                }}
+              >
+                Profile
+              </div>
+
+              {/* LOGOUT */}
               <div
                 style={item}
                 onClick={() => {
@@ -77,6 +90,7 @@ const dropdown = {
   borderRadius: 8,
   boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
   overflow: "hidden",
+  minWidth: 140,
 };
 
 const item = {

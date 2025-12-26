@@ -34,10 +34,9 @@ def api_login(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    # ✅ Generate JWT tokens
     refresh = RefreshToken.for_user(user)
 
-    # ✅ ADMIN LOGIN
+    # ADMIN
     if user.is_superuser:
         return Response({
             "access": str(refresh.access_token),
@@ -46,7 +45,7 @@ def api_login(request):
             "role": "ADMIN"
         })
 
-    # ✅ STAFF CHECK
+    # STAFF
     try:
         staff = StaffProfile.objects.get(user=user)
     except StaffProfile.DoesNotExist:
@@ -70,24 +69,65 @@ def api_login(request):
 
 
 # =====================================================
-# API: CURRENT LOGGED-IN USER PROFILE
+# API: CURRENT LOGGED-IN USER PROFILE (GET + UPDATE)
 # =====================================================
-@api_view(["GET"])
+@api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
 def api_me(request):
     user = request.user
 
-    # ✅ ADMIN USER
+    # =========================
+    # UPDATE PROFILE (PUT)
+    # =========================
+    if request.method == "PUT":
+        # Admin: read-only for now
+        if user.is_superuser:
+            return Response(
+                {"detail": "Admin profile editing not enabled"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            staff = StaffProfile.objects.get(user=user)
+        except StaffProfile.DoesNotExist:
+            return Response(
+                {"error": "Staff profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        data = request.data
+
+        # Update fields safely
+        staff.mobile_number = data.get("mobile_number", staff.mobile_number)
+        staff.date_of_birth = data.get("date_of_birth", staff.date_of_birth)
+        staff.gender = data.get("gender", staff.gender)
+        staff.address = data.get("address", staff.address)
+
+        # Profile picture
+        if "profile_pic" in request.FILES:
+            staff.profile_pic = request.FILES["profile_pic"]
+
+        staff.save()
+
+    # =========================
+    # RETURN PROFILE (GET)
+    # =========================
     if user.is_superuser:
         return Response({
             "full_name": f"{user.first_name} {user.last_name}".strip(),
             "username": user.username,
             "email": user.email,
+
             "mobile_number": None,
+            "date_of_birth": None,
+            "gender": None,
+            "address": None,
+
             "role": "ADMIN",
+            "status": "Active",
+            "profile_pic": None
         })
 
-    # ✅ STAFF USER
     try:
         staff = StaffProfile.objects.get(user=user)
     except StaffProfile.DoesNotExist:
@@ -100,6 +140,13 @@ def api_me(request):
         "full_name": f"{user.first_name} {user.last_name}".strip(),
         "username": user.username,
         "email": user.email,
+
         "mobile_number": staff.mobile_number,
+        "date_of_birth": staff.date_of_birth,
+        "gender": staff.gender,
+        "address": staff.address,
+
         "role": staff.staff_category,
+        "status": "Active" if staff.is_active_staff else "Inactive",
+        "profile_pic": staff.profile_pic.url if staff.profile_pic else None
     })

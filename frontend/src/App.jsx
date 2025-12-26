@@ -30,6 +30,11 @@ import AdminEditUser from "./admin/AdminEditUser";
 // ====================
 import AdminCreateUser from "./pages/AdminCreateUser";
 
+// ====================
+// COMMON PAGES
+// ====================
+import Profile from "./pages/Profile";
+
 function App() {
   return (
     <BrowserRouter>
@@ -64,6 +69,9 @@ function App() {
 
             {/* REPORTS */}
             <Route path="reports" element={<AdminReports />} />
+
+            {/* ✅ NEW: ADMIN PROFILE */}
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Route>
       </Routes>
