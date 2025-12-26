@@ -34,6 +34,8 @@ import AdminCreateUser from "./pages/AdminCreateUser";
 // COMMON PAGES
 // ====================
 import Profile from "./pages/Profile";
+import AdminProfile from "./admin/AdminProfile";
+
 
 function App() {
   return (
@@ -71,7 +73,7 @@ function App() {
             <Route path="reports" element={<AdminReports />} />
 
             {/* ✅ NEW: ADMIN PROFILE */}
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={<AdminProfile />} />
           </Route>
         </Route>
       </Routes>
