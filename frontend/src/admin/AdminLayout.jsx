@@ -28,7 +28,7 @@ const AdminLayout = () => {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          minWidth: 0, // ✅ prevents layout overflow bugs
+          minWidth: 0,
         }}
       >
         {/* Topbar */}
@@ -51,4 +51,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-

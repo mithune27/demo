@@ -24,7 +24,7 @@ const AdminSidebar = ({ collapsed, onToggle }) => {
         transition: "width 0.2s ease",
       }}
     >
-      {/* Header */}
+      {/* ================= Header ================= */}
       <div
         style={{
           height: 64,
@@ -50,14 +50,35 @@ const AdminSidebar = ({ collapsed, onToggle }) => {
         </button>
       </div>
 
-      {/* Links */}
+      {/* ================= Links ================= */}
       <div style={{ padding: 12, flex: 1 }}>
-        <NavLink to="/admin" end style={linkStyle}>📊 {!collapsed && "Dashboard"}</NavLink>
-        <NavLink to="/admin/users" style={linkStyle}>👥 {!collapsed && "Users"}</NavLink>
-        <NavLink to="/admin/attendance" style={linkStyle}>🕒 {!collapsed && "Attendance"}</NavLink>
-        <NavLink to="/admin/leaves" style={linkStyle}>📄 {!collapsed && "Leaves"}</NavLink>
-        <NavLink to="/admin/geofence" style={linkStyle}>📍 {!collapsed && "Geofence"}</NavLink>
-        <NavLink to="/admin/reports" style={linkStyle}>📈 {!collapsed && "Reports"}</NavLink>
+        <NavLink to="/admin" end style={linkStyle}>
+          📊 {!collapsed && "Dashboard"}
+        </NavLink>
+
+        <NavLink to="/admin/users" style={linkStyle}>
+          👥 {!collapsed && "Users"}
+        </NavLink>
+
+        <NavLink to="/admin/profile" style={linkStyle}>
+          👤 {!collapsed && "Profile"}
+        </NavLink>
+
+        <NavLink to="/admin/attendance" style={linkStyle}>
+          🕒 {!collapsed && "Attendance"}
+        </NavLink>
+
+        <NavLink to="/admin/leaves" style={linkStyle}>
+          📄 {!collapsed && "Leaves"}
+        </NavLink>
+
+        <NavLink to="/admin/geofence" style={linkStyle}>
+          📍 {!collapsed && "Geofence"}
+        </NavLink>
+
+        <NavLink to="/admin/reports" style={linkStyle}>
+          📈 {!collapsed && "Reports"}
+        </NavLink>
       </div>
     </div>
   );
