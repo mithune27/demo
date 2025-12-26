@@ -28,6 +28,7 @@ urlpatterns = [
     path("check-out/", api_check_out),
     path("today/", my_attendance),
     path("history/", attendance_history),
+    path("my-attendance/", my_attendance),
 
     # -------- Leave --------
     path("apply-leave/", apply_leave),

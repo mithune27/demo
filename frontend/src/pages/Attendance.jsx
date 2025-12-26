@@ -47,24 +47,32 @@ const Attendance = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await sendLocationPing({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            is_enabled: true,
-          });
-            console.log("GPS RESPONSE:", res.data);
-          // 🔥 NORMALIZE RESPONSE
-          setLocation({
-            location_enabled: res.data.location_enabled ?? true,
-           inside_geofence: !!res.data.inside_geofence,
-        });
+  async (pos) => {
+    try {
+      const latitude = pos.coords.latitude;
+      const longitude = pos.coords.longitude;
 
-        } catch (err) {
-          console.error(err);
-        }
-      },
+      // ✅ LIVE GPS LOGS (THIS IS WHAT WE NEED)
+      console.log("LIVE LAT:", latitude);
+      console.log("LIVE LON:", longitude);
+
+      const res = await sendLocationPing({
+        latitude: latitude,
+        longitude: longitude,
+        is_enabled: true,
+      });
+
+      console.log("GPS RESPONSE:", res.data);
+
+      setLocation({
+        location_enabled: res.data.location_enabled ?? true,
+        inside_geofence: !!res.data.inside_geofence,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
       async () => {
         await sendLocationPing({
           latitude: null,
@@ -194,3 +202,4 @@ const Attendance = () => {
 };
 
 export default Attendance;
+

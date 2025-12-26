@@ -6,7 +6,8 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 from attendance.models import Attendance
-from .models import Geofence, LocationLog
+from .models import LocationLog
+from attendance.models import Geofence
 from .utils import is_inside_geofence
 
 
