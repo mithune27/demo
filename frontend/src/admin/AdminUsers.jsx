@@ -12,14 +12,14 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
 
-  // 🔔 Modal confirmation state
-  const [confirmUser, setConfirmUser] = useState(null);
+  const [confirmToggle, setConfirmToggle] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const loadUsers = async () => {
     try {
       const res = await api.get("/accounts/admin/users/");
       setUsers(res.data);
-    } catch (err) {
+    } catch {
       console.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -30,22 +30,33 @@ const AdminUsers = () => {
     loadUsers();
   }, []);
 
-  // ✅ Toggle Active / Inactive
+  // ================= TOGGLE =================
   const toggleStatus = async () => {
-    if (!confirmUser) return;
+    if (!confirmToggle) return;
+
+    await api.post(
+      `/accounts/admin/users/${confirmToggle.id}/toggle/`
+    );
+    setConfirmToggle(null);
+    loadUsers();
+  };
+
+  // ================= DELETE =================
+  const deleteUser = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await api.post(
-        `/accounts/admin/users/${confirmUser.id}/toggle/`
+      await api.delete(
+        `/accounts/admin/users/${confirmDelete.id}/delete/`
       );
-      setConfirmUser(null);
+      setConfirmDelete(null);
       loadUsers();
-    } catch (err) {
-      console.error("Failed to toggle status");
+    } catch {
+      alert("Delete failed");
     }
   };
 
-  // 🔍 FILTER LOGIC
+  // ================= FILTER =================
   const filteredUsers = users.filter((u) => {
     const matchesSearch = u.username
       .toLowerCase()
@@ -61,42 +72,24 @@ const AdminUsers = () => {
 
   return (
     <div className="admin-users-page">
-      {/* 🔹 HEADER + CREATE BUTTON */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
-        <h1 className="page-title">👥 Users Management</h1>
-
+      {/* HEADER */}
+      <div className="users-header">
+        <h1>👥 Users Management</h1>
         <button
+          className="btn-primary"
           onClick={() => navigate("/admin/users/create")}
-          style={{
-            padding: "10px 16px",
-            backgroundColor: "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
         >
           + Create User
         </button>
       </div>
 
-      {/* 🔍 SEARCH + FILTER */}
+      {/* FILTERS */}
       <div className="users-filters">
         <input
-          type="text"
           placeholder="Search username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
@@ -109,23 +102,22 @@ const AdminUsers = () => {
         </select>
       </div>
 
-      {/* 📋 USERS TABLE */}
+      {/* TABLE */}
       <table className="users-table">
         <thead>
           <tr>
             <th>Username</th>
             <th>Role</th>
             <th>Status</th>
-            <th className="action-col">Action</th>
+            <th className="action-col">Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {filteredUsers.map((u) => (
             <tr key={u.id}>
-              <td className="username">{u.username}</td>
+              <td>{u.username}</td>
               <td>{u.role}</td>
-
               <td>
                 <span
                   className={`status ${
@@ -136,37 +128,37 @@ const AdminUsers = () => {
                 </span>
               </td>
 
-              <td style={{ display: "flex", gap: 12 }}>
-                {/* ✏️ EDIT USER */}
+              <td className="actions">
                 {!u.is_superuser && (
-                  <button
-                    onClick={() =>
-                      navigate(`/admin/users/${u.id}/edit`)
-                    }
-                    style={{
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      border: "1px solid #2563eb",
-                      background: "white",
-                      color: "#2563eb",
-                      cursor: "pointer",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Edit
-                  </button>
-                )}
+                  <>
+                    {/* TOGGLE */}
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={u.is_active}
+                        onChange={() => setConfirmToggle(u)}
+                      />
+                      <span className="slider"></span>
+                    </label>
 
-                {/* 🔁 TOGGLE STATUS */}
-                {!u.is_superuser && (
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={u.is_active}
-                      onChange={() => setConfirmUser(u)}
-                    />
-                    <span className="slider"></span>
-                  </label>
+                    {/* EDIT */}
+                    <button
+                      className="icon-btn"
+                      onClick={() =>
+                        navigate(`/admin/users/${u.id}/edit`)
+                      }
+                    >
+                      ✏️
+                    </button>
+
+                    {/* DELETE */}
+                    <button
+                      className="icon-btn danger"
+                      onClick={() => setConfirmDelete(u)}
+                    >
+                      🗑️
+                    </button>
+                  </>
                 )}
               </td>
             </tr>
@@ -182,46 +174,61 @@ const AdminUsers = () => {
         </tbody>
       </table>
 
-      {/* ✅ CONFIRMATION MODAL */}
-      {confirmUser && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h3>
-              {confirmUser.is_active
-                ? "Deactivate User"
-                : "Activate User"}
-            </h3>
+      {/* ================= TOGGLE MODAL ================= */}
+      {confirmToggle && (
+        <ConfirmModal
+          title={
+            confirmToggle.is_active
+              ? "Deactivate User"
+              : "Activate User"
+          }
+          message={`Are you sure you want to ${
+            confirmToggle.is_active ? "deactivate" : "activate"
+          } ${confirmToggle.username}?`}
+          onCancel={() => setConfirmToggle(null)}
+          onConfirm={toggleStatus}
+        />
+      )}
 
-            <p>
-              Are you sure you want to{" "}
-              <strong>
-                {confirmUser.is_active
-                  ? "deactivate"
-                  : "activate"}
-              </strong>{" "}
-              <strong>{confirmUser.username}</strong>?
-            </p>
-
-            <div className="modal-actions">
-              <button
-                className="btn-cancel"
-                onClick={() => setConfirmUser(null)}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="btn-confirm"
-                onClick={toggleStatus}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ================= DELETE MODAL ================= */}
+      {confirmDelete && (
+        <ConfirmModal
+          danger
+          title="Delete User"
+          message={`This will permanently delete ${confirmDelete.username}.`}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={deleteUser}
+        />
       )}
     </div>
   );
 };
 
 export default AdminUsers;
+
+// ================= MODAL =================
+const ConfirmModal = ({
+  title,
+  message,
+  onCancel,
+  onConfirm,
+  danger,
+}) => (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>{title}</h3>
+      <p>{message}</p>
+      <div className="modal-actions">
+        <button className="btn-cancel" onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          className={danger ? "btn-danger" : "btn-confirm"}
+          onClick={onConfirm}
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+);

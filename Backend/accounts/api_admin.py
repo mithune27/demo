@@ -146,3 +146,21 @@ def update_staff_user(request, user_id):
             {"error": "User not found"},
             status=status.HTTP_404_NOT_FOUND
         )
+
+@api_view(["DELETE"])
+@permission_classes([IsAdminUser])
+def delete_staff_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    # 🚫 Protect super admin
+    if user.is_superuser:
+        return Response(
+            {"error": "Super admin cannot be deleted"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    user.delete()
+    return Response(
+        {"success": "User deleted successfully"},
+        status=status.HTTP_200_OK
+    )

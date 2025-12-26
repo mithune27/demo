@@ -8,22 +8,40 @@ const ProfileDropdown = () => {
   const ref = useRef(null);
   const navigate = useNavigate();
 
-  // Fetch profile once
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // =============================
+  // FETCH PROFILE (ROLE AWARE)
+  // =============================
   useEffect(() => {
+    // 👑 ADMIN → load from localStorage
+    if (user?.isAdmin) {
+      setProfile({
+        full_name: "Administrator",
+        username: "admin",
+        email: "-",
+        role: "ADMIN",
+        mobile_number: null,
+      });
+      return;
+    }
+
+    // 👷 STAFF → fetch from API
     api
-      .get("accounts/api/me/")
+      .get("/accounts/api/me/")
       .then((res) => setProfile(res.data))
       .catch(() => {});
   }, []);
 
-  // Close on outside click (FIXED)
+  // =============================
+  // CLOSE ON OUTSIDE CLICK
+  // =============================
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
       }
     };
-
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, []);
@@ -35,7 +53,7 @@ const ProfileDropdown = () => {
       {/* Trigger */}
       <div
         onClick={(e) => {
-          e.stopPropagation(); // 🔥 IMPORTANT
+          e.stopPropagation();
           setOpen((prev) => !prev);
         }}
         style={{
@@ -52,7 +70,7 @@ const ProfileDropdown = () => {
       {/* Dropdown */}
       {open && (
         <div
-          onClick={(e) => e.stopPropagation()} // 🔥 IMPORTANT
+          onClick={(e) => e.stopPropagation()}
           style={{
             position: "absolute",
             top: "120%",
@@ -66,7 +84,6 @@ const ProfileDropdown = () => {
             zIndex: 100,
           }}
         >
-          {/* Quick Info */}
           <p><b>Name:</b> {profile.full_name}</p>
           <p><b>Username:</b> {profile.username}</p>
           <p><b>Email:</b> {profile.email}</p>
@@ -75,12 +92,13 @@ const ProfileDropdown = () => {
 
           <hr style={{ margin: "10px 0" }} />
 
-          {/* Actions */}
           <button
             style={btnStyle}
             onClick={() => {
               setOpen(false);
-              navigate("/admin/profile");
+              navigate(
+                user?.isAdmin ? "/admin/profile" : "/staff/profile"
+              );
             }}
           >
             Profile
