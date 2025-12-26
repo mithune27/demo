@@ -12,7 +12,7 @@ from accounts.models import StaffProfile
 
 
 # =========================
-# DAILY ATTENDANCE REPORT
+# DAILY ATTENDANCE REPO
 # =========================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

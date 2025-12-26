@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import "./adminUsers.css";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -8,27 +9,37 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
 
+  // 🔔 Modal confirmation state
+  const [confirmUser, setConfirmUser] = useState(null);
+
   const loadUsers = async () => {
-    const res = await api.get("/accounts/admin/users/");
-    setUsers(res.data);
-    setLoading(false);
+    try {
+      const res = await api.get("/accounts/admin/users/");
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadUsers();
   }, []);
 
-  const toggleStatus = async (user) => {
-    const confirm = window.confirm(
-      `Are you sure you want to ${
-        user.is_active ? "deactivate" : "activate"
-      } ${user.username}?`
-    );
+  // ✅ Final toggle action (called ONLY from modal Confirm)
+  const toggleStatus = async () => {
+    if (!confirmUser) return;
 
-    if (!confirm) return;
-
-    await api.post(`/accounts/admin/users/${user.id}/toggle/`);
-    loadUsers();
+    try {
+      await api.post(
+        `/accounts/admin/users/${confirmUser.id}/toggle/`
+      );
+      setConfirmUser(null);
+      loadUsers();
+    } catch (err) {
+      console.error("Failed to toggle status");
+    }
   };
 
   // 🔍 FILTER LOGIC
@@ -46,30 +57,21 @@ const AdminUsers = () => {
   if (loading) return <p>Loading users...</p>;
 
   return (
-    <div>
-      <h1>👥 Users Management</h1>
+    <div className="admin-users-page">
+      <h1 className="page-title">👥 Users Management</h1>
 
       {/* 🔍 SEARCH + FILTER */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginTop: 20,
-          marginBottom: 20,
-        }}
-      >
+      <div className="users-filters">
         <input
           type="text"
           placeholder="Search username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={inputStyle}
         />
 
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          style={inputStyle}
         >
           <option value="ALL">All Roles</option>
           <option value="ADMIN">Admin</option>
@@ -80,36 +82,41 @@ const AdminUsers = () => {
       </div>
 
       {/* 📋 USERS TABLE */}
-      <table className="table">
+      <table className="users-table">
         <thead>
           <tr>
             <th>Username</th>
             <th>Role</th>
             <th>Status</th>
-            <th>Action</th>
+            <th className="action-col">Action</th>
           </tr>
         </thead>
 
         <tbody>
           {filteredUsers.map((u) => (
             <tr key={u.id}>
-              <td>{u.username}</td>
+              <td className="username">{u.username}</td>
               <td>{u.role}</td>
               <td>
-                {u.is_active ? (
-                  <span className="badge badge-success">Active</span>
-                ) : (
-                  <span className="badge badge-danger">Inactive</span>
-                )}
+                <span
+                  className={`status ${
+                    u.is_active ? "active" : "inactive"
+                  }`}
+                >
+                  {u.is_active ? "Active" : "Inactive"}
+                </span>
               </td>
+
               <td>
                 {!u.is_superuser && (
-                  <button
-                    className="btn btn-sm btn-warning"
-                    onClick={() => toggleStatus(u)}
-                  >
-                    Toggle
-                  </button>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={u.is_active}
+                      onChange={() => setConfirmUser(u)}
+                    />
+                    <span className="slider"></span>
+                  </label>
                 )}
               </td>
             </tr>
@@ -117,22 +124,54 @@ const AdminUsers = () => {
 
           {filteredUsers.length === 0 && (
             <tr>
-              <td colSpan="4" style={{ textAlign: "center" }}>
+              <td colSpan="4" className="no-data">
                 No users found
               </td>
             </tr>
           )}
         </tbody>
       </table>
+
+      {/* ✅ CONFIRMATION MODAL (LIKE LOGOUT) */}
+      {confirmUser && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>
+              {confirmUser.is_active
+                ? "Deactivate User"
+                : "Activate User"}
+            </h3>
+
+            <p>
+              Are you sure you want to{" "}
+              <strong>
+                {confirmUser.is_active
+                  ? "deactivate"
+                  : "activate"}
+              </strong>{" "}
+              <strong>{confirmUser.username}</strong>?
+            </p>
+
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setConfirmUser(null)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="btn-confirm"
+                onClick={toggleStatus}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-const inputStyle = {
-  padding: "8px 12px",
-  borderRadius: 8,
-  border: "1px solid #ddd",
-  fontSize: 14,
 };
 
 export default AdminUsers;

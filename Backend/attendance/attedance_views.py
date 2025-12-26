@@ -11,6 +11,8 @@ from locations.models import LocationLog
 from accounts.models import StaffProfile
 
 
+
+
 # =========================
 # DAILY ATTENDANCE REPORT
 # =========================

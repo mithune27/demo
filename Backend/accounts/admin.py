@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import StaffProfile
+from accounts.models import StaffProfile
 
 
 # =========================
@@ -11,7 +11,8 @@ from .models import StaffProfile
 class StaffProfileInline(admin.StackedInline):
     model = StaffProfile
     can_delete = False
-    extra = 0
+    extra = 1                     # ✅ allow creating profile
+    max_num = 1                   # ✅ one-to-one safety
     verbose_name_plural = "Staff Profile"
 
 
@@ -24,10 +25,13 @@ class CustomUserAdmin(BaseUserAdmin):
     # Custom column for staff role
     def staff_role(self, obj):
         if obj.is_superuser:
-            return "Admin"
-        if hasattr(obj, "staffprofile"):
-            return obj.staffprofile.staff_category
-        return "No Role"
+            return "ADMIN"
+
+        staff = getattr(obj, "staffprofile", None)
+        if staff:
+            return staff.staff_category
+
+        return "NO PROFILE"
 
     staff_role.short_description = "Staff Role"
 
@@ -47,6 +51,8 @@ class CustomUserAdmin(BaseUserAdmin):
         "email",
         "staffprofile__mobile_number",
     )
+
+    ordering = ("username",)
 
 
 # =========================
