@@ -1,7 +1,8 @@
 from django.urls import path
 from . import views
 from .api_views import api_login,api_me
-from .api_admin import admin_users_list, toggle_staff_status  
+from .api_admin import admin_users_list, toggle_staff_status, create_staff_user, get_staff_user, update_staff_user
+
 
 urlpatterns = [
     # -------- AUTH --------
@@ -10,6 +11,10 @@ urlpatterns = [
     path("api/login/", api_login, name="api_login"),
     path("admin/users/", admin_users_list),
     path("admin/users/<int:user_id>/toggle/", toggle_staff_status),
+    path("admin/users/create/", create_staff_user),
+    path("admin/users/<int:user_id>/", get_staff_user),
+    path("admin/users/<int:user_id>/update/", update_staff_user),
+
 
     # -------- DASHBOARDS --------
     path("staff/dashboard/", views.staff_dashboard, name="staff_dashboard"),

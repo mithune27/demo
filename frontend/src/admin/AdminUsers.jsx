@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import "./adminUsers.css";
 
 const AdminUsers = () => {
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +30,7 @@ const AdminUsers = () => {
     loadUsers();
   }, []);
 
-  // ✅ Final toggle action (called ONLY from modal Confirm)
+  // ✅ Toggle Active / Inactive
   const toggleStatus = async () => {
     if (!confirmUser) return;
 
@@ -58,7 +61,32 @@ const AdminUsers = () => {
 
   return (
     <div className="admin-users-page">
-      <h1 className="page-title">👥 Users Management</h1>
+      {/* 🔹 HEADER + CREATE BUTTON */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+        }}
+      >
+        <h1 className="page-title">👥 Users Management</h1>
+
+        <button
+          onClick={() => navigate("/admin/users/create")}
+          style={{
+            padding: "10px 16px",
+            backgroundColor: "#2563eb",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          + Create User
+        </button>
+      </div>
 
       {/* 🔍 SEARCH + FILTER */}
       <div className="users-filters">
@@ -97,6 +125,7 @@ const AdminUsers = () => {
             <tr key={u.id}>
               <td className="username">{u.username}</td>
               <td>{u.role}</td>
+
               <td>
                 <span
                   className={`status ${
@@ -107,7 +136,28 @@ const AdminUsers = () => {
                 </span>
               </td>
 
-              <td>
+              <td style={{ display: "flex", gap: 12 }}>
+                {/* ✏️ EDIT USER */}
+                {!u.is_superuser && (
+                  <button
+                    onClick={() =>
+                      navigate(`/admin/users/${u.id}/edit`)
+                    }
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 6,
+                      border: "1px solid #2563eb",
+                      background: "white",
+                      color: "#2563eb",
+                      cursor: "pointer",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Edit
+                  </button>
+                )}
+
+                {/* 🔁 TOGGLE STATUS */}
                 {!u.is_superuser && (
                   <label className="switch">
                     <input
@@ -132,7 +182,7 @@ const AdminUsers = () => {
         </tbody>
       </table>
 
-      {/* ✅ CONFIRMATION MODAL (LIKE LOGOUT) */}
+      {/* ✅ CONFIRMATION MODAL */}
       {confirmUser && (
         <div className="modal-backdrop">
           <div className="modal">
