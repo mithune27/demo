@@ -24,6 +24,11 @@ import AdminDashboard from "./admin/AdminDashboard";
 import AdminUsers from "./admin/AdminUsers";
 import AdminReports from "./admin/AdminReports";
 
+// ====================
+// COMMON PAGES
+// ====================
+import Profile from "./pages/Profile";
+
 function App() {
   return (
     <BrowserRouter>
@@ -52,6 +57,9 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="reports" element={<AdminReports />} />
+
+            {/* ✅ NEW: ADMIN PROFILE */}
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Route>
       </Routes>
