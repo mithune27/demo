@@ -1,12 +1,20 @@
-from openpyxl import Workbook
+from datetime import datetime, timedelta
+
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
-from datetime import datetime, timedelta
+from django.utils import timezone
+
+from openpyxl import Workbook
 
 from .models import LeaveRequest
 from attendance.models import Attendance
+
+# 🔴 REQUIRED DRF IMPORTS (THIS FIXES YOUR ERROR)
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
 
 
 # =========================
@@ -120,7 +128,7 @@ def staff_leave_history(request):
 
 
 # =========================
-# ADMIN: ALL LEAVE HISTORY
+# ADMIN: ALL LEAVE HISTORY (HTML)
 # =========================
 @login_required
 def admin_leave_history(request):
@@ -134,7 +142,6 @@ def admin_leave_history(request):
         "leaves/admin_leave_list.html",
         {"leaves": leaves}
     )
-
 
 
 # =========================
@@ -183,7 +190,7 @@ def admin_leave_statistics(request):
 
 
 # =========================
-# EXCEL EXPORTS
+# STAFF: EXCEL EXPORT
 # =========================
 @login_required
 def export_my_leaves_excel(request):
@@ -206,5 +213,100 @@ def export_my_leaves_excel(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response["Content-Disposition"] = 'attachment; filename="my_leaves.xlsx"'
+    wb.save(response)
+    return response
+
+
+# =========================
+# ADMIN: LEAVES LIST API (REACT)
+# =========================
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def admin_leaves_list(request):
+    leaves = LeaveRequest.objects.select_related("user").all().order_by("-start_date")
+
+    data = []
+    for leave in leaves:
+        data.append({
+            "id": leave.id,
+            "user": leave.user.username,
+            "leave_type": leave.leave_type,
+            "start_date": leave.start_date,
+            "end_date": leave.end_date,
+            "reason": leave.reason,
+            "status": leave.status,
+        })
+
+    return Response(data)
+@api_view(["POST"])
+@permission_classes([IsAdminUser])
+def admin_review_leave_api(request, leave_id):
+    action = request.data.get("action")
+    leave = get_object_or_404(LeaveRequest, id=leave_id)
+
+    if leave.status != "PENDING":
+        return Response(
+            {"error": "Leave already reviewed"},
+            status=400
+        )
+
+    if action == "APPROVE":
+        leave.status = "APPROVED"
+        leave.reviewed_by = request.user
+        leave.reviewed_at = timezone.now()
+        leave.save()
+
+        current_date = leave.start_date
+        while current_date <= leave.end_date:
+            Attendance.objects.get_or_create(
+                user=leave.user,
+                date=current_date,
+                defaults={"status": "ABSENT"}
+            )
+            current_date += timedelta(days=1)
+
+        return Response({"message": "Leave approved"})
+
+    if action == "REJECT":
+        leave.status = "REJECTED"
+        leave.reviewed_by = request.user
+        leave.reviewed_at = timezone.now()
+        leave.save()
+
+        return Response({"message": "Leave rejected"})
+
+    return Response({"error": "Invalid action"}, status=400)
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def admin_leaves_export_excel(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Leaves"
+
+    ws.append([
+        "User",
+        "Type",
+        "From",
+        "To",
+        "Reason",
+        "Status"
+    ])
+
+    leaves = LeaveRequest.objects.select_related("user").all().order_by("-start_date")
+
+    for l in leaves:
+        ws.append([
+            l.user.username,
+            l.leave_type,
+            str(l.start_date),
+            str(l.end_date),
+            l.reason,
+            l.status,
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="leaves.xlsx"'
     wb.save(response)
     return response

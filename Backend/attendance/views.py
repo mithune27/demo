@@ -9,7 +9,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .utils import calculate_effective_seconds
-from .models import Attendance, AttendanceSession, StaffProfile
+from .models import Attendance, AttendanceSession
+from accounts.models import StaffProfile
 from leaves.models import LeaveRequest
 
 
@@ -291,3 +292,60 @@ def admin_create_user(request):
         {"message": "User created successfully"},
         status=status.HTTP_201_CREATED
     )
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def admin_attendance_list(request):
+    attendance = Attendance.objects.select_related("user").all().order_by("-date")
+
+    data = []
+    for a in attendance:
+        data.append({
+            "user": a.user.username,
+            "date": a.date,
+            "check_in_time": a.check_in_time,
+            "check_out_time": a.check_out_time,
+            "status": a.status,
+        })
+
+    return Response(data)
+import openpyxl
+from django.http import HttpResponse
+from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import api_view, permission_classes
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def admin_attendance_export_excel(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Attendance"
+
+    # Header
+    ws.append([
+        "User",
+        "Date",
+        "Check In",
+        "Check Out",
+        "Status"
+    ])
+
+    attendance = Attendance.objects.select_related("user").all().order_by("-date")
+
+    for a in attendance:
+        ws.append([
+            a.user.username,
+            str(a.date),
+            str(a.check_in_time) if a.check_in_time else "",
+            str(a.check_out_time) if a.check_out_time else "",
+            a.status,
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=attendance.xlsx"
+
+    wb.save(response)
+    return response

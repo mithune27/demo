@@ -1,4 +1,6 @@
 from django.urls import path
+from .views import admin_attendance_list
+from .views import admin_attendance_export_excel
 
 # =========================
 # ATTENDANCE APIs
@@ -29,6 +31,9 @@ urlpatterns = [
     path("today/", my_attendance),
     path("history/", attendance_history),
     path("my-attendance/", my_attendance),
+    path("admin/attendance/", admin_attendance_list),
+    path("admin/attendance/export/", admin_attendance_export_excel),
+
 
     # -------- Leave --------
     path("apply-leave/", apply_leave),

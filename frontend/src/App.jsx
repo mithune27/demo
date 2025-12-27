@@ -24,18 +24,20 @@ import AdminDashboard from "./admin/AdminDashboard";
 import AdminUsers from "./admin/AdminUsers";
 import AdminReports from "./admin/AdminReports";
 import AdminEditUser from "./admin/AdminEditUser";
+import AdminAttendance from "./admin/AdminAttendance";
+import AdminProfile from "./admin/AdminProfile";
 
 // ====================
 // ADMIN CREATE USER
 // ====================
 import AdminCreateUser from "./pages/AdminCreateUser";
+import AdminLeaves from "./admin/AdminLeaves";
+
 
 // ====================
-// COMMON PAGES
+// COMMON
 // ====================
 import Profile from "./pages/Profile";
-import AdminProfile from "./admin/AdminProfile";
-
 
 function App() {
   return (
@@ -67,13 +69,20 @@ function App() {
             {/* USERS */}
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/create" element={<AdminCreateUser />} />
-            <Route path="users/:id/edit" element={<AdminEditUser />} /> {/* ✅ EDIT USER */}
+            <Route path="users/:id/edit" element={<AdminEditUser />} />
+
+            {/* ATTENDANCE ✅ */}
+            <Route path="attendance" element={<AdminAttendance />} />
+            <Route path="leaves" element={<AdminLeaves />} />
+
 
             {/* REPORTS */}
             <Route path="reports" element={<AdminReports />} />
 
-            {/* ✅ NEW: ADMIN PROFILE */}
+            {/* PROFILE */}
             <Route path="profile" element={<AdminProfile />} />
+            <Route path="leaves" element={<AdminLeaves />} />
+
           </Route>
         </Route>
       </Routes>
