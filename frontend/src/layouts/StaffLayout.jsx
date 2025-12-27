@@ -31,11 +31,34 @@ const StaffLayout = () => {
             overflowY: "auto",
           }}
         >
-          <div style={{ width: "100%", maxWidth: 1100 }}>
+          {/* 🔥 ANIMATED CONTAINER */}
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 1100,
+              animation: "fadeSlide 0.35s ease-out",
+            }}
+          >
             <Outlet />
           </div>
         </div>
       </div>
+
+      {/* 🔑 Animation Keyframes */}
+      <style>
+        {`
+          @keyframes fadeSlide {
+            from {
+              opacity: 0;
+              transform: translateY(12px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

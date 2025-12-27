@@ -1,0 +1,10 @@
+.attendance-page {
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.attendance-card {
+  width: 100%;
+  max-width: 520px;
+}
