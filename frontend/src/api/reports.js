@@ -14,3 +14,7 @@ export const getGeofenceReport = () =>
 
 export const getGpsOffReport = () =>
   api.get("/attendance/reports/gps-off/");
+
+/* ✅ ADD THIS */
+export const getAttendanceHistory = () =>
+  api.get("/attendance/history/");

@@ -32,14 +32,14 @@ body {
 }
 
 /* ================================
-   PAGE WRAPPER (CENTER + ROUTE ANIM)
+   PAGE WRAPPER
 ================================ */
 .page {
   min-height: 100vh;
   width: 100%;
   display: flex;
-  align-items: center;       /* vertical center */
-  justify-content: center;   /* horizontal center */
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   animation: pageFade 0.5s ease-out;
 }
@@ -56,7 +56,7 @@ body {
 }
 
 /* ================================
-   CARD (POP-UP EFFECT)
+   CARD
 ================================ */
 .card {
   background: var(--card-bg);
@@ -114,24 +114,17 @@ body {
   box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
 }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 /* ================================
    BADGES
 ================================ */
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 12px;
-  animation: fadeIn 0.4s ease;
 }
 
 .badge-success {
@@ -150,53 +143,6 @@ body {
 }
 
 /* ================================
-   STATUS TEXT
-================================ */
-.status-text {
-  font-weight: 700;
-  font-size: 15px;
-  margin-bottom: 12px;
-  animation: fadeIn 0.4s ease;
-}
-
-.status-success {
-  color: var(--success);
-}
-
-.status-warning {
-  color: var(--warning);
-}
-
-.status-danger {
-  color: var(--danger);
-  animation: pulseDanger 1.4s infinite;
-}
-
-/* ================================
-   ANIMATIONS
-================================ */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pulseDanger {
-  0% {
-    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(231, 76, 60, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
-  }
-}
-
-/* ================================
    TEXT HELPERS
 ================================ */
 .text-center {
@@ -207,25 +153,10 @@ body {
   color: var(--text-muted);
   font-size: 14px;
 }
-/* ================================
-   ATTENDANCE PAGE FIX
-================================ */
-.attendance-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 40px 16px;
-}
 
-.attendance-card {
-  max-width: 480px;
-  width: 100%;
-}
 /* ================================
-   STAFF DASHBOARD ANIMATIONS
+   DASHBOARD ANIMATION
 ================================ */
-
-/* Dashboard card entry */
 .dashboard-card {
   animation: dashboardEnter 0.6s ease-out;
 }
@@ -241,26 +172,145 @@ body {
   }
 }
 
-/* Dashboard buttons stagger animation */
-.dashboard-btn {
-  opacity: 0;
-  animation: buttonFadeUp 0.5s ease forwards;
+/* ================================
+   TABLE (GLOBAL)
+================================ */
+.table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.dashboard-btn:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.dashboard-btn:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.dashboard-btn:nth-child(3) {
-  animation-delay: 0.3s;
+.table th {
+  background: #f8fafc;
+  font-weight: 700;
+  font-size: 14px;
 }
 
-@keyframes buttonFadeUp {
+.table td,
+.table th {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table tr:hover {
+  background: #f9fafb;
+}
+
+/* ================================
+   REPORT TABLE – FIXED ALIGNMENT
+================================ */
+.report-table th,
+.report-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.report-table td {
+  font-size: 14px;
+}
+
+.report-table .badge {
+  min-width: 90px;
+}
+
+/* ================================
+   REPORT FILTERS
+================================ */
+.report-filters {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.report-input,
+.report-select {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: #f9fafb;
+  transition: all 0.25s ease;
+}
+
+.report-input:focus,
+.report-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.25);
+}
+
+/* ================================
+   REPORT BACK BUTTON
+================================ */
+.report-back-btn {
+  width: 100%;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: linear-gradient(135deg, #6c63ff, #8e7bff);
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  box-shadow: 0 10px 25px rgba(108, 99, 255, 0.35);
+  transition: all 0.3s ease;
+}
+
+.report-back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(108, 99, 255, 0.45);
+}
+
+/* ================================
+   REDUCED MOTION
+================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* ================================
+   DAILY REPORT DATE ALIGN FIX
+================================ */
+.report-date-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 10px;
+}
+
+.report-date-wrapper label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.report-date-wrapper .report-input {
+  min-width: 180px;
+  text-align: center;
+}
+/* ================================
+   REPORT TAB TRANSITIONS
+================================ */
+
+/* Wrapper animation */
+.report-animate {
+  animation: reportSlideFade 0.45s ease both;
+}
+
+@keyframes reportSlideFade {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -268,17 +318,34 @@ body {
   }
 }
 
-/* Hover polish */
-.dashboard-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(108, 99, 255, 0.25);
-}
-.clickable {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+/* Table row stagger animation */
+.fade-in-row {
+  animation: rowFadeUp 0.4s ease both;
 }
 
-.clickable:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+@keyframes rowFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filters animation */
+.report-filters-wrapper {
+  animation: filterFade 0.35s ease both;
+}
+
+@keyframes filterFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

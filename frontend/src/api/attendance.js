@@ -18,3 +18,8 @@ export const downloadMonthlyReport = () =>
   api.get("attendance/export/monthly/", {
     responseType: "blob",
   });
+ 
+export const getAttendanceHistory = () => {
+  return api.get("/attendance/history/");
+};
+
