@@ -5,39 +5,40 @@ const tabs = [
   "Leave Details",
 ];
 
-export default function ReportTabs({ active, setActive }) {
+const ReportTabs = ({ active, setActive }) => {
   return (
-    <div style={styles.row}>
-      {tabs.map((t) => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",   // ✅ center buttons horizontally
+        gap: 12,
+        marginBottom: 24,
+      }}
+    >
+      {tabs.map((tab) => (
         <button
-          key={t}
-          onClick={() => setActive(t)}
+          key={tab}
+          onClick={() => setActive(tab)}
           style={{
-            ...styles.tab,
-            background: active === t ? "#7044ff" : "#eee",
-            color: active === t ? "white" : "black",
+            width: "100%",          // ✅ same width
+            maxWidth: 320,          // ✅ button size control
+            padding: "12px 18px",
+            borderRadius: 12,
+            border: "1px solid #e5e7eb",
+            background: active === tab ? "#6d5dfc" : "#f3f4f6",
+            color: active === tab ? "#fff" : "#111827",
+            fontWeight: 600,
+            cursor: "pointer",
+            textAlign: "center",    // ✅ center text
+            transition: "all 0.2s ease",
           }}
         >
-          {t}
+          {tab}
         </button>
       ))}
     </div>
   );
-}
-
-const styles = {
-  row: {
-    display: "flex",
-    gap: 10,
-    marginBottom: 15,
-    flexWrap: "wrap",
-  },
-  tab: {
-    padding: "10px 16px",
-    borderRadius: 10,
-    border: "1px solid #ddd",
-    cursor: "pointer",
-    fontSize: 13,
-  },
 };
 
+export default ReportTabs;

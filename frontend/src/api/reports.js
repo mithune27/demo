@@ -9,15 +9,10 @@ export const getMonthlyReport = (year, month) =>
 export const getLeaveReport = () =>
   api.get("/attendance/reports/leaves/");
 
-export const getGeofenceReport = () =>
-  api.get("/attendance/reports/geofence/");
-
-export const getGpsOffReport = () =>
-  api.get("/attendance/reports/gps-off/");
-
-export const getMultiDailyReport = (date) => {
-  return api.get("/attendance/api/multi/report/daily/", {
+export const getMultiDailyReport = (date) =>
+  api.get("/attendance/api/multi/report/daily/", {
     params: { date },
   });
-};
 
+export const getAttendanceHistory = () =>
+  api.get("/attendance/history/");

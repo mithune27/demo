@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getTodayAttendance, checkIn, checkOut,getTodayAttendanceMulti,checkInMulti,checkOutMulti } from "../api/attendance";
 import { sendLocationPing } from "../api/location";
+import "./attendance.css";
 
 const Attendance = () => {
   console.log("Attendance component rendered");
@@ -20,9 +21,7 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // -------------------------
-  // Load attendance
-  // -------------------------
+  // ================= LOAD ATTENDANCE =================
   const loadStatus = async () => {
   try {
     const res = await getTodayAttendanceMulti();
@@ -44,9 +43,7 @@ const Attendance = () => {
 };
 
 
-  // -------------------------
-  // GPS Ping (FINAL)
-  // -------------------------
+  // ================= GPS PING =================
   const pingLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
@@ -54,32 +51,28 @@ const Attendance = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-  async (pos) => {
-    try {
-      const latitude = pos.coords.latitude;
-      const longitude = pos.coords.longitude;
+      async (pos) => {
+        try {
+          const latitude = pos.coords.latitude;
+          const longitude = pos.coords.longitude;
 
-      // ✅ LIVE GPS LOGS (THIS IS WHAT WE NEED)
-      console.log("LIVE LAT:", latitude);
-      console.log("LIVE LON:", longitude);
+          console.log("LIVE LAT:", latitude);
+          console.log("LIVE LON:", longitude);
 
-      const res = await sendLocationPing({
-        latitude: latitude,
-        longitude: longitude,
-        is_enabled: true,
-      });
+          const res = await sendLocationPing({
+            latitude,
+            longitude,
+            is_enabled: true,
+          });
 
-      console.log("GPS RESPONSE:", res.data);
-
-      setLocation({
-        location_enabled: res.data.location_enabled ?? true,
-        inside_geofence: !!res.data.inside_geofence,
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  },
-
+          setLocation({
+            location_enabled: res.data.location_enabled ?? true,
+            inside_geofence: !!res.data.inside_geofence,
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      },
       async () => {
         await sendLocationPing({
           latitude: null,
@@ -100,9 +93,7 @@ const Attendance = () => {
     );
   };
 
-  // -------------------------
-  // Initial load
-  // -------------------------
+  // ================= INITIAL LOAD =================
   useEffect(() => {
     loadStatus();
     pingLocation();
@@ -111,9 +102,7 @@ const Attendance = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // -------------------------
-  // Permission logic
-  // -------------------------
+  // ================= PERMISSION =================
   const canCheckIn =
     location.location_enabled &&
     location.inside_geofence &&
@@ -121,9 +110,7 @@ const Attendance = () => {
     !checkedIn;
     !checkedIn;
 
-  // -------------------------
-  // Actions
-  // -------------------------
+  // ================= ACTIONS =================
   const handleCheckIn = async () => {
     if (!canCheckIn) return;
     setLoading(true);
@@ -151,9 +138,7 @@ const Attendance = () => {
     }
   };
 
-  // -------------------------
-  // Location badge
-  // -------------------------
+  // ================= LOCATION BADGE =================
   const renderLocationBadge = () => {
     if (!location.location_enabled) {
       return <span className="badge badge-danger">🔴 GPS OFF</span>;
@@ -166,8 +151,9 @@ const Attendance = () => {
     );
   };
 
+  // ================= UI =================
   return (
-    <div className="attendance-wrapper">
+    <div className="attendance-page">   {/* 🔥 FIXED WRAPPER */}
       <div className="card attendance-card">
         <h2 className="text-center">📍 Attendance</h2>
 
@@ -212,4 +198,3 @@ const Attendance = () => {
 };
 
 export default Attendance;
-

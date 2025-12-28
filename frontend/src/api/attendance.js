@@ -1,5 +1,9 @@
 import api from "./axios";
 
+/* =========================
+   SINGLE-SESSION ATTENDANCE
+========================= */
+
 // Get today's attendance
 export const getTodayAttendance = () => {
   return api.get("/attendance/my-attendance/");
@@ -15,10 +19,15 @@ export const checkOut = () => {
   return api.post("/attendance/api/check-out/");
 };
 
+// Download monthly report
 export const downloadMonthlyReport = () =>
-  api.get("attendance/export/monthly/", {
+  api.get("/attendance/export/monthly/", {
     responseType: "blob",
   });
+
+/* =========================
+   MULTI-SESSION ATTENDANCE
+========================= */
 
 // Get today's multi-session attendance
 export const getTodayAttendanceMulti = () => {
@@ -33,4 +42,12 @@ export const checkInMulti = () => {
 // Multi check-out
 export const checkOutMulti = () => {
   return api.post("/attendance/api/multi/check-out/");
+};
+
+/* =========================
+   ATTENDANCE HISTORY
+========================= */
+
+export const getAttendanceHistory = () => {
+  return api.get("/attendance/history/");
 };
