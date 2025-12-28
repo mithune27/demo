@@ -11,6 +11,9 @@ from .api_views import (
     my_attendance,
     apply_leave,
     attendance_history,
+    multi_check_in,
+    multi_check_out,
+    multi_today_summary,
 )
 
 # =========================
@@ -22,17 +25,25 @@ from .report_views import (
     leave_report,
     geofence_violation_report,
     gps_disabled_report,
+    multi_daily_attendance_report,
 )
+
+from .api_admin import admin_attendance_multi
 
 urlpatterns = [
     # -------- Attendance --------
     path("api/check-in/", api_check_in),
     path("api/check-out/", api_check_out),
+    path("api/multi/check-in/", multi_check_in),
+    path("api/multi/check-out/", multi_check_out),
+    path("api/multi/today/", multi_today_summary),
     path("today/", my_attendance),
     path("history/", attendance_history),
     path("my-attendance/", my_attendance),
     path("admin/attendance/", admin_attendance_list),
     path("admin/attendance/export/", admin_attendance_export_excel),
+    path("api/multi/report/daily/", multi_daily_attendance_report),
+    path("admin/attendance/multi/", admin_attendance_multi),
 
 
     # -------- Leave --------

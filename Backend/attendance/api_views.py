@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from .models import Attendance
+from .models import Attendance,AttendanceDay,AttendanceSession
 
 
 # =========================
@@ -44,11 +44,15 @@ def api_check_in(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    Attendance.objects.create(
+    Attendance.objects.get_or_create(
         user=user,
         date=today,
-        check_in_time=timezone.now(),
-        status="PRESENT"
+        #check_in_time=timezone.now(),
+        #status="PRESENT"
+        defaults={
+            "check_in_time":timezone.now(),
+            "status": "PRESENT",
+        }
     )
 
     return Response(
@@ -208,5 +212,119 @@ def today_attendance_summary(request):
     return JsonResponse({
         "status": attendance.status,
         "total_hours": f"{total_hours}h {total_minutes}m",
+        "sessions": sessions
+    })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def multi_check_in(request):
+    user = request.user
+    today = timezone.localdate()
+
+    attendance_day, _ = AttendanceDay.objects.get_or_create(
+        user=user,
+        date=today,
+        defaults={"status": "PRESENT"}
+    )
+
+    # ❌ Block if already checked in (open session exists)
+    if attendance_day.sessions.filter(check_out__isnull=True).exists():
+        return Response(
+            {"error": "Already checked in"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    AttendanceSession.objects.create(
+        attendance_day=attendance_day,
+        check_in=timezone.now()
+    )
+
+    attendance_day.status = "PRESENT"
+    attendance_day.save()
+
+    return Response(
+        {"message": "Checked in (session started)"},
+        status=status.HTTP_200_OK
+    )
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def multi_check_out(request):
+    user = request.user
+    today = timezone.localdate()
+
+    attendance_day = AttendanceDay.objects.filter(
+        user=user,
+        date=today
+    ).first()
+
+    if not attendance_day:
+        return Response(
+            {"error": "No attendance found"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    session = attendance_day.sessions.filter(
+        check_out__isnull=True
+    ).first()
+
+    if not session:
+        return Response(
+            {"error": "No active check-in"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    now = timezone.now()
+    duration = int((now - session.check_in).total_seconds())
+
+    session.check_out = now
+    session.duration_seconds = duration
+    session.save()
+
+    # ✅ accumulate total
+    attendance_day.total_work_seconds += duration
+    attendance_day.save()
+
+    return Response(
+        {
+            "message": "Checked out (session closed)",
+            "worked_seconds_today": attendance_day.total_work_seconds
+        },
+        status=status.HTTP_200_OK
+    )
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def multi_today_summary(request):
+    user = request.user
+    today = timezone.localdate()
+
+    attendance_day = AttendanceDay.objects.filter(
+        user=user,
+        date=today
+    ).first()
+
+    if not attendance_day:
+        return Response({
+            "checked_in": False,
+            "total_work_seconds": 0,
+            "sessions": []
+        })
+
+    open_session = attendance_day.sessions.filter(
+        check_out__isnull=True
+    ).exists()
+
+    sessions = []
+    for s in attendance_day.sessions.all():
+        sessions.append({
+            "check_in": s.check_in,
+            "check_out": s.check_out,
+            "minutes": s.duration_seconds // 60
+        })
+
+    return Response({
+        "checked_in": open_session,
+        "total_work_seconds": attendance_day.total_work_seconds,
         "sessions": sessions
     })

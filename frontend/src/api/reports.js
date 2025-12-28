@@ -14,3 +14,10 @@ export const getGeofenceReport = () =>
 
 export const getGpsOffReport = () =>
   api.get("/attendance/reports/gps-off/");
+
+export const getMultiDailyReport = (date) => {
+  return api.get("/attendance/api/multi/report/daily/", {
+    params: { date },
+  });
+};
+

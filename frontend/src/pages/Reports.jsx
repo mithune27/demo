@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import ReportTabs from "../components/ReportTabs";
-import { getDailyReport, getMonthlyReport, getLeaveReport } from "../api/reports";
+import { getDailyReport, getMonthlyReport, getLeaveReport, getMultiDailyReport } from "../api/reports";
 
 
 const Reports = () => {
+  const [openSession, setOpenSession] = useState(null);
+
   const [active, setActive] = useState("Daily Attendance");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,8 @@ const Reports = () => {
       let res;
 
       if (active === "Daily Attendance") {
-        res = await getDailyReport(today);
+        res =await getMultiDailyReport(today);
+        res = await getMultiDailyReport(today);
       }
 
       else if (active === "Monthly Summary") {
@@ -60,25 +63,78 @@ const Reports = () => {
           <table className="table">
             <thead>
               <tr>
-                {Object.keys(data[0]).map((key) => (
-                  <th key={key}>
-                    {key.replace(/_/g, " ")}
-                  </th>
-                ))}
+                <th>Date</th>
+                <th>Username</th>
+                <th>Total Hours</th>
+                <th>Status</th>
+                <th>Sessions</th>
               </tr>
             </thead>
-
             <tbody>
-              {data.map((row, idx) => (
-                <tr key={idx}>
-                  {Object.values(row).map((val, i) => (
-                    <td key={i}>
-                      {val === null ? "-" : String(val)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            {data.map((row, idx) => (
+              <tr key={idx}>
+                {/* DATE */}
+                <td>{row.date}</td>
+
+                {/* USER */}
+                <td>{row.username}</td>
+
+                {/* TOTAL HOURS */}
+                <td>
+                  {(() => {
+                    const totalMinutes = Math.round((row.total_hours || 0) * 60);
+                    const h = Math.floor(totalMinutes / 60);
+                    const m = totalMinutes % 60;
+                    return `${h}h ${m}m`;
+                  })()}
+                </td>
+
+                {/* STATUS */}
+                <td>{row.status}</td>
+
+                {/* SESSIONS DROPDOWN */}
+                <td>
+                  <button
+                    className="btn btn-link"
+                    onClick={() => setOpenSession(openSession === idx ? null : idx)}
+                  >
+                    {openSession === idx
+                      ? "Hide"
+                      : `View (${row.sessions?.length || 0})`}
+                  </button>
+
+                  {openSession === idx && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        padding: 8,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 8,
+                        background: "#f9fafb",
+                      }}
+                    >
+                      {(row.sessions || []).length === 0 ? (
+                        <p style={{ margin: 0 }}>No sessions</p>
+                      ) : (
+                        <ul style={{ margin: 0, paddingLeft: 16 }}>
+                          {(row.sessions || []).map((s, i) => (
+                            <li key={i}>
+                              {new Date(s.check_in).toLocaleTimeString()} →{" "}
+                              {s.check_out
+                                ? new Date(s.check_out).toLocaleTimeString()
+                                : "—"}{" "}
+                              ({s.minutes} min)
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+
           </table>
         )}
       </div>

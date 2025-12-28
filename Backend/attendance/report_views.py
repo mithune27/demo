@@ -9,6 +9,8 @@ from .models import Attendance
 from leaves.models import LeaveRequest
 from locations.models import LocationLog
 from accounts.models import StaffProfile
+from .models import AttendanceDay, AttendanceSession
+
 
 
 # =========================
@@ -125,3 +127,33 @@ def gps_disabled_report(request):
         }
         for l in logs
     ])
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def multi_daily_attendance_report(request):
+    report_date = request.GET.get("date", timezone.localdate())
+    user = request.user
+
+    qs = AttendanceDay.objects.filter(date=report_date)
+    if not user.is_superuser:
+        qs = qs.filter(user=user)
+
+    data = []
+    for day in qs:
+        profile = getattr(day.user, "staffprofile", None)
+
+        sessions = []
+        for s in day.sessions.all():
+            sessions.append({
+                "check_in": s.check_in,
+                "check_out": s.check_out,
+                "minutes": s.duration_seconds // 60,
+            })
+        data.append({
+            "date": day.date,
+            "username": day.user.username,
+            "role": profile.staff_category if profile else None,
+            "sessions": sessions,
+            "total_hours": round(day.total_work_seconds / 3600, 2),
+        })
+
+    return Response(data)

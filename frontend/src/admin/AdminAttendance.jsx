@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
+
 /* ======================
    STATUS BADGE STYLES
 ====================== */
 const statusStyle = (status) => {
-  if (status === "PRESENT") return { background: "#dcfce7", color: "#166534" };
-  if (status === "ABSENT") return { background: "#fee2e2", color: "#991b1b" };
-  if (status === "AUTO_CHECKOUT")
-    return { background: "#ffedd5", color: "#9a3412" };
-  return {};
+  if (status === "FULL DAY")
+    return { background: "#dcfce7", color: "#166534" };
+
+  if (status === "HALF DAY")
+    return { background: "#fef9c3", color: "#854d0e" };
+
+  if (status === "ABSENT")
+    return { background: "#fee2e2", color: "#991b1b" };
+
+  return {
+    background: "#e5e7eb",
+    color: "#374151",
+  };
 };
+
 
 /* ======================
    FILTER BAR STYLES
@@ -51,6 +61,7 @@ const buttonStyle = {
 };
 
 const AdminAttendance = () => {
+  const [openSession, setOpenSession] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
@@ -58,7 +69,7 @@ const AdminAttendance = () => {
 
   useEffect(() => {
     api
-      .get("/attendance/admin/attendance/")
+      .get("/attendance/admin/attendance/multi")
       .then((res) => setAttendance(res.data))
       .catch((err) => console.error(err));
   }, []);
@@ -74,7 +85,7 @@ const AdminAttendance = () => {
     const matchStatus = statusFilter ? a.status === statusFilter : true;
     const matchDate = dateFilter ? a.date === dateFilter : true;
     const matchUser = userFilter
-      ? a.user.toLowerCase().includes(userFilter.toLowerCase())
+      ? a.username.toLowerCase().includes(userFilter.toLowerCase())
       : true;
 
     return matchStatus && matchDate && matchUser;
@@ -102,9 +113,9 @@ const AdminAttendance = () => {
           style={{ ...selectStyle, width: "160px" }}
         >
           <option value="">All Status</option>
-          <option value="PRESENT">PRESENT</option>
+          <option value="FULL DAY">FULL DAY</option>
+          <option value="HALF DAY">HALF DAY</option>
           <option value="ABSENT">ABSENT</option>
-          <option value="AUTO_CHECKOUT">AUTO_CHECKOUT</option>
         </select>
 
         {/* Date */}
@@ -135,7 +146,7 @@ const AdminAttendance = () => {
         >
           <thead style={{ background: "#f1f5f9" }}>
             <tr>
-              {["User", "Date", "Check In", "Check Out", "Status"].map((h) => (
+              {["User", "Date", "Total Hours", "Status", "Sessions"].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -150,36 +161,86 @@ const AdminAttendance = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredAttendance.map((a, i) => (
-              <tr key={i}>
-                <td style={{ padding: 10 }}>{a.user}</td>
-                <td style={{ padding: 10 }}>{a.date}</td>
-                <td style={{ padding: 10 }}>{a.check_in_time || "-"}</td>
-                <td style={{ padding: 10 }}>{a.check_out_time || "-"}</td>
-                <td style={{ padding: 10 }}>
-                  <span
+          {filteredAttendance.map((a, i) => (
+            <tr key={i}>
+              <td style={{ padding: 10 }}>{a.username}</td>
+
+              <td style={{ padding: 10 }}>{a.date}</td>
+
+              {/* TOTAL HOURS */}
+              <td style={{ padding: 10 }}>
+                {(() => {
+                  const mins = Math.round(a.total_hours * 60);
+                  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                })()}
+              </td>
+
+              {/* STATUS */}
+              <td style={{ padding: 10 }}>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    ...statusStyle(a.status),
+                  }}
+                >
+                  {a.status}
+                </span>
+              </td>
+
+              {/* SESSIONS DROPDOWN */}
+              <td style={{ padding: 10 }}>
+                <button
+                  className="btn btn-link"
+                  onClick={() =>
+                    setOpenSession(openSession === i ? null : i)
+                  }
+                >
+                  {openSession === i ? "Hide" : `View (${a.sessions?.length || 0})`}
+                </button>
+
+                {openSession === i && (
+                  <div
                     style={{
-                      padding: "4px 10px",
-                      borderRadius: 999,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      ...statusStyle(a.status),
+                      marginTop: 6,
+                      padding: 8,
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      background: "#f9fafb",
                     }}
                   >
-                    {a.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                    {a.sessions.length === 0 ? (
+                      <p style={{ margin: 0 }}>No sessions</p>
+                    ) : (
+                      <ul style={{ margin: 0, paddingLeft: 16 }}>
+                        { (a.sessions || []).map((s, idx) => (
+                          <li key={idx}>
+                            {new Date(s.check_in).toLocaleTimeString()} →{" "}
+                            {s.check_out
+                              ? new Date(s.check_out).toLocaleTimeString()
+                              : "—"}{" "}
+                            ({s.minutes} min)
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
 
-            {filteredAttendance.length === 0 && (
-              <tr>
-                <td colSpan="5" style={{ padding: 16, textAlign: "center" }}>
-                  No records found
-                </td>
-              </tr>
-            )}
-          </tbody>
+          {filteredAttendance.length === 0 && (
+            <tr>
+              <td colSpan="5" style={{ padding: 16, textAlign: "center" }}>
+                No records found
+              </td>
+            </tr>
+          )}
+        </tbody>
+
         </table>
       </div>
     </div>

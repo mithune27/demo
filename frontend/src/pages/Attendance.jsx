@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { getTodayAttendance, checkIn, checkOut } from "../api/attendance";
+import { getTodayAttendance, checkIn, checkOut,getTodayAttendanceMulti,checkInMulti,checkOutMulti } from "../api/attendance";
 import { sendLocationPing } from "../api/location";
 
 const Attendance = () => {
   console.log("Attendance component rendered");
-
+  
   const [status, setStatus] = useState("loading");
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
@@ -24,18 +24,25 @@ const Attendance = () => {
   // Load attendance
   // -------------------------
   const loadStatus = async () => {
-    try {
-      const res = await getTodayAttendance();
-      setStatus(res.data.status);
-      setCheckedIn(res.data.checked_in || false);
-      setCheckedOut(res.data.checked_out || false);
-      setCheckInTime(res.data.check_in_time);
-      setCheckOutTime(res.data.check_out_time);
-      setOnLeave(res.data.on_leave || false);
-    } catch {
-      setError("Failed to load attendance");
+  try {
+    const res = await getTodayAttendanceMulti();
+
+    setCheckedIn(res.data.checked_in);
+    setCheckedOut(false); // multi-session does not lock checkout permanently
+    setStatus(res.data.checked_in ? "PRESENT" : "NOT CHECKED IN");
+    setOnLeave(false);
+
+    // optional – keep compatibility
+    if (res.data.sessions?.length) {
+      const last = res.data.sessions.at(-1);
+      setCheckInTime(last.check_in || null);
+      setCheckOutTime(last.check_out || null);
     }
-  };
+  } catch {
+    setError("Failed to load attendance");
+  }
+};
+
 
   // -------------------------
   // GPS Ping (FINAL)
@@ -112,6 +119,7 @@ const Attendance = () => {
     location.inside_geofence &&
     !onLeave &&
     !checkedIn;
+    !checkedIn;
 
   // -------------------------
   // Actions
@@ -120,7 +128,8 @@ const Attendance = () => {
     if (!canCheckIn) return;
     setLoading(true);
     try {
-      await checkIn();
+      /*await checkIn();*/
+      await checkInMulti();
       await loadStatus();
     } catch {
       setError("Check-in failed");
@@ -132,7 +141,8 @@ const Attendance = () => {
   const handleCheckOut = async () => {
     setLoading(true);
     try {
-      await checkOut();
+      /*await checkOut();*/
+      await checkOutMulti();
       await loadStatus();
     } catch {
       setError("Check-out failed");
@@ -190,7 +200,7 @@ const Attendance = () => {
 
           <button
             className="btn btn-danger"
-            disabled={!checkedIn || checkedOut || loading}
+            disabled={!checkedIn || loading}
             onClick={handleCheckOut}
           >
             {checkedOut ? "Checked Out" : "Check Out"}
