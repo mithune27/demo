@@ -23,7 +23,6 @@ const Reports = () => {
 
       if (active === "Daily Attendance") {
         res =await getMultiDailyReport(today);
-        res = await getMultiDailyReport(today);
       }
 
       else if (active === "Monthly Summary") {
@@ -60,6 +59,7 @@ const Reports = () => {
         )}
 
         {!loading && data.length > 0 && (
+
           <table className="table">
             <thead>
               <tr>
@@ -90,7 +90,7 @@ const Reports = () => {
                 </td>
 
                 {/* STATUS */}
-                <td>{row.status}</td>
+                <td>{row.status || "-"}</td>
 
                 {/* SESSIONS DROPDOWN */}
                 <td>

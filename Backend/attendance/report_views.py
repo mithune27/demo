@@ -4,22 +4,35 @@ from rest_framework.response import Response
 from django.utils import timezone
 from datetime import date
 from calendar import monthrange
+from django.contrib.auth.models import User
 
-from .models import Attendance
+from attendance.models import Attendance, AttendanceDay
 from leaves.models import LeaveRequest
 from locations.models import LocationLog
 from accounts.models import StaffProfile
-from .models import AttendanceDay, AttendanceSession
 
 
+# ======================================================
+# HELPER: CALCULATE DAY STATUS FROM WORK SECONDS
+# ======================================================
+def calculate_day_status(total_seconds: int) -> str:
+    hours = total_seconds / 3600
 
-# =========================
-# DAILY ATTENDANCE REPO
-# =========================
+    if hours >= 7:
+        return "FULL DAY"
+    elif hours >= 4:
+        return "HALF DAY"
+    else:
+        return "ABSENT"
+
+
+# ======================================================
+# DAILY ATTENDANCE REPORT (SINGLE – LEGACY)
+# ======================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def daily_attendance_report(request):
-    report_date = request.GET.get("date", timezone.now().date())
+    report_date = request.GET.get("date", timezone.localdate())
 
     qs = Attendance.objects.filter(date=report_date)
 
@@ -40,9 +53,58 @@ def daily_attendance_report(request):
     return Response(data)
 
 
-# =========================
+# ======================================================
+# MULTI-SESSION DAILY ATTENDANCE REPORT (FINAL)
+# ======================================================
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def multi_daily_attendance_report(request):
+    report_date = request.GET.get("date", timezone.localdate())
+    user = request.user
+
+    # Decide users to include
+    if user.is_superuser:
+        users = User.objects.all()
+    else:
+        users = [user]
+
+    data = []
+
+    for u in users:
+        attendance_day, _ = AttendanceDay.objects.get_or_create(
+            user=u,
+            date=report_date,
+            defaults={"total_work_seconds": 0}
+        )
+
+        profile = getattr(u, "staffprofile", None)
+
+        sessions = []
+        for s in attendance_day.sessions.all():
+            sessions.append({
+                "check_in": s.check_in,
+                "check_out": s.check_out,
+                "minutes": s.duration_seconds // 60,
+            })
+
+        total_seconds = attendance_day.total_work_seconds
+        status = calculate_day_status(total_seconds)
+
+        data.append({
+            "date": report_date,
+            "username": u.username,
+            "role": profile.staff_category if profile else None,
+            "total_hours": round(total_seconds / 3600, 2),
+            "status": status,
+            "sessions": sessions,
+        })
+
+    return Response(data)
+
+
+# ======================================================
 # MONTHLY SUMMARY REPORT
-# =========================
+# ======================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def monthly_summary_report(request):
@@ -52,30 +114,37 @@ def monthly_summary_report(request):
     start = date(year, month, 1)
     end = date(year, month, monthrange(year, month)[1])
 
-    qs = Attendance.objects.filter(date__range=[start, end])
+    qs = AttendanceDay.objects.filter(date__range=[start, end])
 
     if not request.user.is_superuser:
         qs = qs.filter(user=request.user)
 
     summary = {}
 
-    for a in qs:
-        uid = a.user.username
-        summary.setdefault(uid, {"present": 0, "absent": 0, "auto_checkout": 0})
+    for day in qs:
+        uid = day.user.username
+        summary.setdefault(uid, {
+            "username": uid,
+            "full_day": 0,
+            "half_day": 0,
+            "absent": 0,
+        })
 
-        if a.status == "PRESENT":
-            summary[uid]["present"] += 1
-        elif a.status == "ABSENT":
+        status = calculate_day_status(day.total_work_seconds)
+
+        if status == "FULL DAY":
+            summary[uid]["full_day"] += 1
+        elif status == "HALF DAY":
+            summary[uid]["half_day"] += 1
+        else:
             summary[uid]["absent"] += 1
-        elif a.status == "AUTO_CHECKOUT":
-            summary[uid]["auto_checkout"] += 1
 
-    return Response(summary)
+    return Response(list(summary.values()))
 
 
-# =========================
+# ======================================================
 # LEAVE REPORT
-# =========================
+# ======================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def leave_report(request):
@@ -95,9 +164,9 @@ def leave_report(request):
     ])
 
 
-# =========================
-# GEOFENCE VIOLATION REPORT
-# =========================
+# ======================================================
+# GEOFENCE VIOLATION REPORT (ADMIN)
+# ======================================================
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def geofence_violation_report(request):
@@ -112,9 +181,9 @@ def geofence_violation_report(request):
     ])
 
 
-# =========================
-# GPS OFF REPORT
-# =========================
+# ======================================================
+# GPS OFF REPORT (ADMIN)
+# ======================================================
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def gps_disabled_report(request):
@@ -127,33 +196,3 @@ def gps_disabled_report(request):
         }
         for l in logs
     ])
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def multi_daily_attendance_report(request):
-    report_date = request.GET.get("date", timezone.localdate())
-    user = request.user
-
-    qs = AttendanceDay.objects.filter(date=report_date)
-    if not user.is_superuser:
-        qs = qs.filter(user=user)
-
-    data = []
-    for day in qs:
-        profile = getattr(day.user, "staffprofile", None)
-
-        sessions = []
-        for s in day.sessions.all():
-            sessions.append({
-                "check_in": s.check_in,
-                "check_out": s.check_out,
-                "minutes": s.duration_seconds // 60,
-            })
-        data.append({
-            "date": day.date,
-            "username": day.user.username,
-            "role": profile.staff_category if profile else None,
-            "sessions": sessions,
-            "total_hours": round(day.total_work_seconds / 3600, 2),
-        })
-
-    return Response(data)
