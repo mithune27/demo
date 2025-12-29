@@ -7,14 +7,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 from .models import StaffProfile    
 
 
 # =====================================================
-# API LOGIN (JWT BASED) – FOR REACT
+# API LOGIN (auth BASED) – FOR REACT
 # =====================================================
+from rest_framework.authtoken.models import Token
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def api_login(request):
@@ -35,16 +37,18 @@ def api_login(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    refresh = RefreshToken.for_user(user)
+    # ✅ Create or get token
+    token, _ = Token.objects.get_or_create(user=user)
 
+    # ADMIN LOGIN
     if user.is_superuser:
         return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
+            "token": token.key,
             "is_admin": True,
             "role": "ADMIN"
         })
 
+    # STAFF LOGIN
     try:
         staff = StaffProfile.objects.get(user=user)
     except StaffProfile.DoesNotExist:
@@ -60,12 +64,10 @@ def api_login(request):
         )
 
     return Response({
-        "access": str(refresh.access_token),
-        "refresh": str(refresh),
+        "token": token.key,
         "is_admin": False,
         "role": staff.staff_category
     })
-
 
 # =====================================================
 # API: CURRENT LOGGED-IN USER PROFILE (GET + UPDATE)
