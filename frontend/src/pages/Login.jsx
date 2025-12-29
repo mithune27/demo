@@ -19,9 +19,8 @@ const Login = () => {
     try {
       const res = await loginUser({ username, password });
 
-      // ✅ STORE JWT TOKENS
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+      // ✅ STORE AUTH TOKEN (NOT JWT)
+      localStorage.setItem("token", res.data.token);
 
       // ✅ STORE USER INFO
       const userData = {

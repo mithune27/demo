@@ -10,10 +10,10 @@ const api = axios.create({
 // ================= REQUEST INTERCEPTOR =================
 api.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem("access");
+    const token = localStorage.getItem("token");
 
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    if (token) {
+      config.headers.Authorization = `Token ${token}`;
     }
 
     return config;
@@ -26,8 +26,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem("access");
-      localStorage.removeItem("refresh");
+      // Token invalid or expired
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/";
     }
 
