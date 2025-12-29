@@ -91,6 +91,8 @@ def create_staff_user(request):
         user=user,
         mobile_number=data["mobile"],
         staff_category=data["role"],
+        gender=data.get("gender"),              # ✅ ADD
+        date_of_birth=data.get("dob"),
         is_active_staff=True
     )
 
@@ -141,6 +143,8 @@ def update_staff_user(request, user_id):
 
         staff.mobile_number = data.get("mobile", staff.mobile_number)
         staff.staff_category = data.get("role", staff.staff_category)
+        staff.gender = data.get("gender", staff.gender)            # ✅ ADD
+        staff.date_of_birth = data.get("dob", staff.date_of_birth)
         staff.is_active_staff = data.get("is_active", staff.is_active_staff)
         staff.save()
 

@@ -78,9 +78,9 @@ const AdminEditUser = () => {
             onChange={handleChange}
           >
             <option value="">Select</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+            <option value="o">Other</option>
           </select>
         </div>
 

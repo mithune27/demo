@@ -13,7 +13,7 @@ const AdminCreateUser = () => {
     email: "",
     dob: "",
     sex: "",
-    mobile: "+91",
+    mobile: "",
     role: "SECURITY",
   });
 
@@ -27,9 +27,22 @@ const AdminCreateUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const [first_name = "", last_name = ""] = form.full_name.split(" ");
+
+    const payload = {
+      username: form.username,
+      password: form.password,
+      email: form.email,
+      first_name,
+      last_name,
+      dob: form.dob,
+      gender: form.gender,
+      mobile: form.mobile,
+      role: form.role,
+    };
 
     try {
-      await api.post("/accounts/admin/users/create/", form);
+      await api.post("/accounts/admin/users/create/", payload);
       setSuccess(true); // ✅ show modal
     } catch (err) {
       alert("Failed to create user");
@@ -96,11 +109,11 @@ const AdminCreateUser = () => {
 
           <div className="form-group">
             <label>Gender</label>
-            <select name="sex" onChange={handleChange}>
+            <select name="gender" onChange={handleChange}>
               <option value="">Select</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+              <option value="O">Other</option>
             </select>
           </div>
 
@@ -110,7 +123,7 @@ const AdminCreateUser = () => {
               <span>🇮🇳 +91</span>
               <input
                 name="mobile"
-                maxLength="13"
+                maxLength="10"
                 value={form.mobile}
                 onChange={handleChange}
                 placeholder="10 digit number"
