@@ -11,6 +11,60 @@ from attendance.models import Geofence
 from .utils import is_inside_geofence
 
 
+from django.utils import timezone
+from datetime import timedelta
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_location_logs(request):
+    """
+    Admin location logs with filters:
+    ?user=veera
+    ?range=today | week | month
+    """
+
+    logs = LocationLog.objects.select_related("user").order_by("-timestamp")
+
+    # -------------------------
+    # FILTER: USERNAME
+    # -------------------------
+    username = request.GET.get("user")
+    if username:
+        logs = logs.filter(user__username__icontains=username)
+
+    # -------------------------
+    # FILTER: DATE RANGE
+    # -------------------------
+    range_type = request.GET.get("range")
+    now = timezone.now()
+
+    if range_type == "today":
+        logs = logs.filter(timestamp__date=now.date())
+
+    elif range_type == "week":
+        start = now - timedelta(days=7)
+        logs = logs.filter(timestamp__gte=start)
+
+    elif range_type == "month":
+        start = now - timedelta(days=30)
+        logs = logs.filter(timestamp__gte=start)
+
+    # -------------------------
+    # LIMIT (safety)
+    # -------------------------
+    logs = logs[:300]
+
+    data = []
+    for log in logs:
+        data.append({
+            "username": log.user.username,
+            "gps_enabled": log.is_location_enabled,
+            "inside_geofence": log.is_inside_geofence,
+            "timestamp": log.timestamp,
+        })
+
+    return Response(data)
+
 # =====================================================
 # STAFF: LOCATION PING (every 30 mins)
 # =====================================================

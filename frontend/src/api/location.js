@@ -11,6 +11,14 @@ export const sendLocationPing = async ({
     is_enabled,
   });
 };
+export const getAdminLocationLogs = async ({ user = "", range = "" }) => {
+  const params = new URLSearchParams();
+
+  if (user) params.append("user", user);
+  if (range) params.append("range", range);
+
+  return await api.get(`locations/admin/logs/?${params.toString()}`);
+};
 
 export const getLocationStatus = async () => {
   return await api.get("locations/status/");

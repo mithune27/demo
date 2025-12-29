@@ -8,25 +8,10 @@ const ProfileDropdown = () => {
   const ref = useRef(null);
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
   // =============================
-  // FETCH PROFILE (ROLE AWARE)
+  // FETCH PROFILE (ADMIN + STAFF)
   // =============================
   useEffect(() => {
-    // 👑 ADMIN → load from localStorage
-    if (user?.isAdmin) {
-      setProfile({
-        full_name: "Administrator",
-        username: "admin",
-        email: "-",
-        role: "ADMIN",
-        mobile_number: null,
-      });
-      return;
-    }
-
-    // 👷 STAFF → fetch from API
     api
       .get("/accounts/api/me/")
       .then((res) => setProfile(res.data))
@@ -64,7 +49,7 @@ const ProfileDropdown = () => {
           fontWeight: 600,
         }}
       >
-        👤 {profile.full_name || profile.username} ▾
+        👤 {profile.first_name} {profile.last_name} ▾
       </div>
 
       {/* Dropdown */}
@@ -84,28 +69,23 @@ const ProfileDropdown = () => {
             zIndex: 100,
           }}
         >
-          <p><b>Name:</b> {profile.full_name}</p>
+          <p><b>Name:</b> {profile.first_name} {profile.last_name}</p>
           <p><b>Username:</b> {profile.username}</p>
           <p><b>Email:</b> {profile.email}</p>
-          <p><b>Mobile:</b> {profile.mobile_number || "-"}</p>
+          <p><b>Mobile:</b> {profile.mobile || "-"}</p>
+          <p><b>Gender:</b> {profile.gender || "-"}</p>
+          <p>
+            <b>DOB:</b>{" "}
+            {profile.dob
+              ? new Date(profile.dob).toLocaleDateString("en-GB")
+              : "-"}
+          </p>
           <p><b>Role:</b> {profile.role}</p>
 
           <hr style={{ margin: "10px 0" }} />
 
           <button
             style={btnStyle}
-            onClick={() => {
-              setOpen(false);
-              navigate(
-                user?.isAdmin ? "/admin/profile" : "/staff/profile"
-              );
-            }}
-          >
-            Profile
-          </button>
-
-          <button
-            style={{ ...btnStyle, background: "#ffe5e5", color: "#b00020" }}
             onClick={() => {
               localStorage.clear();
               navigate("/");

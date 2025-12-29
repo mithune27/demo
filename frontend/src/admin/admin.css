@@ -1,0 +1,106 @@
+/* ===== ADMIN GEOFENCE ===== */
+
+.admin-geofence {
+  padding: 10px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.search-input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  min-width: 220px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #6366f1;
+}
+
+.range-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+.table-wrapper {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.clean-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.clean-table th {
+  background: #f8f9fb;
+  text-align: left;
+  padding: 14px;
+  font-size: 14px;
+  color: #555;
+}
+
+.clean-table td {
+  padding: 14px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+}
+
+.clean-table tr:hover {
+  background: #fafafa;
+}
+
+.username {
+  font-weight: 500;
+}
+
+.time {
+  color: #555;
+  font-size: 13px;
+}
+
+.muted-text {
+  margin-top: 20px;
+  color: #777;
+}
+
+/* ===== BADGES ===== */
+
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badge-green {
+  background: #e6f9f0;
+  color: #067647;
+}
+
+.badge-red {
+  background: #fdeaea;
+  color: #b42318;
+}
+
+.badge-orange {
+  background: #fff3e6;
+  color: #b54708;
+}

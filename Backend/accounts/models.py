@@ -14,6 +14,7 @@ class StaffProfile(models.Model):
         ('SECURITY', 'Security'),
         ('HOUSEKEEPING', 'Housekeeping'),
         ('CANTEEN', 'Canteen'),
+        ('ADMIN', 'Admin'),
     ]
 
     user = models.OneToOneField(
@@ -26,10 +27,21 @@ class StaffProfile(models.Model):
         validators=[mobile_validator],
         help_text="Enter 10-digit mobile number"
     )
-
+        # ✅ ADD DOB HERE
+    date_of_birth = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of birth"
+    )
     staff_category = models.CharField(
         max_length=20,
         choices=STAFF_CATEGORY_CHOICES
+    )
+    gender = models.CharField(
+        max_length=10,
+        choices=[("M", "Male"), ("F", "Female"), ("O", "Other")],
+        null=True,
+        blank=True
     )
 
     is_active_staff = models.BooleanField(default=True)

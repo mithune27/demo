@@ -26,7 +26,7 @@ import AdminReports from "./admin/AdminReports";
 import AdminEditUser from "./admin/AdminEditUser";
 import AdminAttendance from "./admin/AdminAttendance";
 import AdminProfile from "./admin/AdminProfile";
-
+import AdminGeofence from "./admin/AdminGeofence";
 // ====================
 // ADMIN CREATE USER
 // ====================
@@ -74,6 +74,8 @@ function App() {
             {/* ATTENDANCE ✅ */}
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="leaves" element={<AdminLeaves />} />
+            <Route path="geofence" element={<AdminGeofence />} />
+
 
 
             {/* REPORTS */}

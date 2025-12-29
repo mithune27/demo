@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 const StaffTopbar = () => {
   const navigate = useNavigate();
@@ -18,8 +19,13 @@ const StaffTopbar = () => {
         justifyContent: "flex-end",
         padding: "0 24px",
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        gap: "16px",          // 👈 spacing between profile & logout
       }}
     >
+      {/* 👤 PROFILE DROPDOWN */}
+      <ProfileDropdown />
+
+      {/* 🚪 LOGOUT BUTTON */}
       <button
         onClick={logout}
         style={{
