@@ -76,9 +76,7 @@ const AdminSidebar = ({ collapsed, onToggle }) => {
           📍 {!collapsed && "Geofence"}
         </NavLink>
 
-        <NavLink to="/admin/reports" style={linkStyle}>
-          📈 {!collapsed && "Reports"}
-        </NavLink>
+        
       </div>
     </div>
   );

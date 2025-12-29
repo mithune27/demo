@@ -33,12 +33,7 @@ const AdminDashboard = () => {
           📍 Geofence
         </div>
 
-        <div
-          className="card clickable"
-          onClick={() => navigate("/admin/reports")}
-        >
-          📊 Reports
-        </div>
+        
 
         <div
           className="card clickable"
