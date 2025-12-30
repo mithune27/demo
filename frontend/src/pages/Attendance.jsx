@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { getTodayAttendance, checkIn, checkOut,getTodayAttendanceMulti,checkInMulti,checkOutMulti } from "../api/attendance";
+import {
+  getTodayAttendanceMulti,
+  checkInMulti,
+  checkOutMulti,
+  getAttendanceCalendar,
+} from "../api/attendance";
 import { sendLocationPing } from "../api/location";
+import AttendanceCalendar from "../components/AttendanceCalendar";
 import "./attendance.css";
 
-const Attendance = () => {
+const Attendance = ({ showCheckIn = false }) => {
   console.log("Attendance component rendered");
-  
+
   const [status, setStatus] = useState("loading");
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
@@ -21,27 +27,28 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ================= LOAD ATTENDANCE =================
+  // 📅 CALENDAR DATA (FROM BACKEND)
+  const [calendarData, setCalendarData] = useState([]);
+
+  // ================= LOAD TODAY STATUS =================
   const loadStatus = async () => {
-  try {
-    const res = await getTodayAttendanceMulti();
+    try {
+      const res = await getTodayAttendanceMulti();
 
-    setCheckedIn(res.data.checked_in);
-    setCheckedOut(false); // multi-session does not lock checkout permanently
-    setStatus(res.data.checked_in ? "PRESENT" : "NOT CHECKED IN");
-    setOnLeave(false);
+      setCheckedIn(res.data.checked_in);
+      setCheckedOut(false);
+      setStatus(res.data.checked_in ? "PRESENT" : "NOT CHECKED IN");
+      setOnLeave(false);
 
-    // optional – keep compatibility
-    if (res.data.sessions?.length) {
-      const last = res.data.sessions.at(-1);
-      setCheckInTime(last.check_in || null);
-      setCheckOutTime(last.check_out || null);
+      if (res.data.sessions?.length) {
+        const last = res.data.sessions.at(-1);
+        setCheckInTime(last.check_in || null);
+        setCheckOutTime(last.check_out || null);
+      }
+    } catch {
+      setError("Failed to load attendance");
     }
-  } catch {
-    setError("Failed to load attendance");
-  }
-};
-
+  };
 
   // ================= GPS PING =================
   const pingLocation = () => {
@@ -53,15 +60,9 @@ const Attendance = () => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
-          const latitude = pos.coords.latitude;
-          const longitude = pos.coords.longitude;
-
-          console.log("LIVE LAT:", latitude);
-          console.log("LIVE LON:", longitude);
-
           const res = await sendLocationPing({
-            latitude,
-            longitude,
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
             is_enabled: true,
           });
 
@@ -85,11 +86,7 @@ const Attendance = () => {
           inside_geofence: false,
         });
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000,
-      }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
   };
 
@@ -102,12 +99,25 @@ const Attendance = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // ================= LOAD CALENDAR (ATTENDANCE PAGE ONLY) =================
+  useEffect(() => {
+    if (showCheckIn) return;
+
+    const today = new Date();
+    const month = `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}`;
+
+    getAttendanceCalendar(month)
+      .then((res) => setCalendarData(res.data))
+      .catch(() => setError("Failed to load calendar"));
+  }, [showCheckIn]);
+
   // ================= PERMISSION =================
   const canCheckIn =
     location.location_enabled &&
     location.inside_geofence &&
     !onLeave &&
-    !checkedIn;
     !checkedIn;
 
   // ================= ACTIONS =================
@@ -115,7 +125,6 @@ const Attendance = () => {
     if (!canCheckIn) return;
     setLoading(true);
     try {
-      /*await checkIn();*/
       await checkInMulti();
       await loadStatus();
     } catch {
@@ -128,7 +137,6 @@ const Attendance = () => {
   const handleCheckOut = async () => {
     setLoading(true);
     try {
-      /*await checkOut();*/
       await checkOutMulti();
       await loadStatus();
     } catch {
@@ -143,7 +151,6 @@ const Attendance = () => {
     if (!location.location_enabled) {
       return <span className="badge badge-danger">🔴 GPS OFF</span>;
     }
-
     return location.inside_geofence ? (
       <span className="badge badge-success">🟢 Inside Campus</span>
     ) : (
@@ -153,48 +160,89 @@ const Attendance = () => {
 
   // ================= UI =================
   return (
-    <div className="attendance-page">   {/* 🔥 FIXED WRAPPER */}
-      <div className="card attendance-card">
-        <h2 className="text-center">📍 Attendance</h2>
+    <div className="attendance-page">
+      {/* CHECK-IN / CHECK-OUT → DASHBOARD ONLY */}
+      {showCheckIn && (
+        <div className="card attendance-card">
+          <h2 className="text-center">📍 Attendance</h2>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <div className="text-center">{renderLocationBadge()}</div>
+          <div className="text-center">{renderLocationBadge()}</div>
 
-        {!location.location_enabled && (
-          <p className="status-danger">🔴 Enable GPS to check in</p>
-        )}
+          {!location.location_enabled && (
+            <p className="status-danger">🔴 Enable GPS to check in</p>
+          )}
 
-        {location.location_enabled && !location.inside_geofence && (
-          <p className="status-warning">
-            🟠 Move inside campus to check in
+          {location.location_enabled && !location.inside_geofence && (
+            <p className="status-warning">
+              🟠 Move inside campus to check in
+            </p>
+          )}
+
+          <p className="text-center">
+            <strong>Status:</strong> {status}
           </p>
-        )}
 
-        <p className="text-center">
-          <strong>Status:</strong> {status}
-        </p>
+          <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
+            <button
+              className="btn btn-primary"
+              disabled={!canCheckIn || loading}
+              onClick={handleCheckIn}
+            >
+              {checkedIn ? "Checked In" : "Check In"}
+            </button>
 
-        <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
-          <button
-            className="btn btn-primary"
-            disabled={!canCheckIn || loading}
-            onClick={handleCheckIn}
-          >
-            {checkedIn ? "Checked In" : "Check In"}
-          </button>
-
-          <button
-            className="btn btn-danger"
-            disabled={!checkedIn || loading}
-            onClick={handleCheckOut}
-          >
-            {checkedOut ? "Checked Out" : "Check Out"}
-          </button>
+            <button
+              className="btn btn-danger"
+              disabled={!checkedIn || loading}
+              onClick={handleCheckOut}
+            >
+              {checkedOut ? "Checked Out" : "Check Out"}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 📅 CALENDAR → ATTENDANCE PAGE ONLY */}
+      {!showCheckIn && (
+        <div className="card attendance-card" style={{ marginTop: 30 }}>
+          <h2 className="text-center">📅 Attendance Calendar</h2>
+          <AttendanceCalendar data={calendarData} />
+          {/* LEGEND */}
+        <div
+          style={{
+            display: "flex",
+            gap: "16px",
+            justifyContent: "center",
+            marginTop: "16px",
+            flexWrap: "wrap",
+          }}
+        >
+          <LegendItem color="#15803d" label="Full Day Present" />
+          <LegendItem color="#86efac" label="Half Day Present" />
+          <LegendItem color="#dc2626" label="Absent" />
+          <LegendItem color="#facc15" label="Leave Applied" />
+        </div>  
+        </div>
+      )}
     </div>
   );
 };
+const LegendItem = ({ color, label }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <span
+      style={{
+        width: 14,
+        height: 14,
+        background: color,
+        borderRadius: 4,
+        display: "inline-block",
+      }}
+    />
+    <span style={{ fontSize: 14 }}>{label}</span>
+  </div>
+);
+
 
 export default Attendance;

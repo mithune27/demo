@@ -14,6 +14,7 @@ from .api_views import (
     multi_check_in,
     multi_check_out,
     multi_today_summary,
+    attendance_calendar,
 )
 
 # =========================
@@ -37,6 +38,8 @@ urlpatterns = [
     path("api/multi/check-in/", multi_check_in),
     path("api/multi/check-out/", multi_check_out),
     path("api/multi/today/", multi_today_summary),
+    path("api/calendar/", attendance_calendar),
+
     path("today/", my_attendance),
     path("history/", attendance_history),
     path("my-attendance/", my_attendance),

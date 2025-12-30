@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Attendance from "./Attendance";
 
 const cardStyle = {
   background: "#ffffff",
@@ -29,13 +30,12 @@ const StaffDashboard = () => {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
           gap: "24px",
+          marginBottom: "40px",
         }}
       >
         <div
           style={cardStyle}
           onClick={() => navigate("/staff/attendance")}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
         >
           ⏱️ <strong>Attendance</strong>
         </div>
@@ -43,8 +43,6 @@ const StaffDashboard = () => {
         <div
           style={cardStyle}
           onClick={() => navigate("/staff/apply-leave")}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
         >
           📝 <strong>Apply Leave</strong>
         </div>
@@ -52,8 +50,6 @@ const StaffDashboard = () => {
         <div
           style={cardStyle}
           onClick={() => navigate("/staff/leaves")}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
         >
           📄 <strong>My Leaves</strong>
         </div>
@@ -61,12 +57,13 @@ const StaffDashboard = () => {
         <div
           style={cardStyle}
           onClick={() => navigate("/staff/reports")}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
         >
           📊 <strong>Reports</strong>
         </div>
       </div>
+
+      {/* CHECK-IN / CHECK-OUT */}
+      <Attendance showCheckIn={true} />
     </div>
   );
 };

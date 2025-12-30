@@ -9,9 +9,13 @@ from leaves.models import LeaveRequest
 from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from calendar import monthrange
+from datetime import date
 
 from .models import Attendance,AttendanceDay,AttendanceSession
 
+FULL_DAY_SECONDS = 8 * 60 * 60      # 8 hours
+HALF_DAY_SECONDS = 4 * 60 * 60      # 4 hours
 
 # =========================
 # API: CHECK-IN
@@ -328,3 +332,68 @@ def multi_today_summary(request):
         "total_work_seconds": attendance_day.total_work_seconds,
         "sessions": sessions
     })
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def attendance_calendar(request):
+    user = request.user
+    month = request.GET.get("month")
+
+    if not month:
+        return Response(
+            {"error": "month query param required (YYYY-MM)"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    year, month_num = map(int, month.split("-"))
+    days_in_month = monthrange(year, month_num)[1]
+
+    result = []
+
+    for day in range(1, days_in_month + 1):
+        current_date = date(year, month_num, day)
+
+        # ================= LEAVE HAS ABSOLUTE PRIORITY =================
+        leave = LeaveRequest.objects.filter(
+            user=user,
+            start_date__lte=current_date,
+            end_date__gte=current_date,
+        ).first()
+
+        if leave:
+            result.append({
+                "date": current_date,
+                "status": (
+                    "LEAVE_APPROVED"
+                    if leave.status == "APPROVED"
+                    else "LEAVE_APPLIED"
+                ),
+                "worked_seconds": 0,
+            })
+            continue  # 🚨 THIS CONTINUE IS CRITICAL
+
+        # ================= ATTENDANCE BASED ON HOURS =================
+        attendance_day = AttendanceDay.objects.filter(
+            user=user,
+            date=current_date
+        ).first()
+
+        if attendance_day:
+            worked = attendance_day.total_work_seconds
+
+            if worked >= FULL_DAY_SECONDS:
+                status_value = "PRESENT"
+            elif worked >= HALF_DAY_SECONDS:
+                status_value = "HALF_DAY"
+            else:
+                status_value = "ABSENT"
+        else:
+            status_value = "ABSENT"
+
+        result.append({
+            "date": current_date,
+            "status": status_value,
+            "worked_seconds": attendance_day.total_work_seconds if attendance_day else 0,
+        })
+
+    return Response(result, status=status.HTTP_200_OK)

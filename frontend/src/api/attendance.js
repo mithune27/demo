@@ -51,3 +51,5 @@ export const checkOutMulti = () => {
 export const getAttendanceHistory = () => {
   return api.get("/attendance/history/");
 };
+export const getAttendanceCalendar = (month) =>
+  api.get(`/attendance/api/calendar/?month=${month}`);
